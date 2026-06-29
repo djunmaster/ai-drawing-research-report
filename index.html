@@ -3,231 +3,805 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 图纸分析三大需求 — 最终调研报告</title>
+<title>AI 图纸分析三大需求 · 端到端架构与商业化最终调研报告</title>
 <style>
   :root{
     --bg:#0f1220; --panel:#171b2e; --panel2:#1d2238; --line:#2a3050;
     --text:#e8ebf5; --muted:#9aa3c0; --accent:#6c8cff; --accent2:#36d1b7;
-    --p0:#ff6b6b; --p1:#ffb454; --p2:#54c7ec; --ok:#36d1b7; --warn:#ffd166;
+    --p0:#ff6b6b; --p1:#ffb454; --p2:#54c7ec; --p3:#a0a8c8;
+    --ok:#36d1b7; --warn:#ffd166; --bad:#ff6b6b;
+    --code:#9fd3ff;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{
     margin:0; font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
-    background:radial-gradient(1200px 600px at 20% -10%,#1b2142 0%,var(--bg) 55%) fixed;
-    color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased;
+    background:var(--bg); color:var(--text); line-height:1.75; -webkit-font-smoothing:antialiased;
   }
-  .wrap{max-width:980px; margin:0 auto; padding:0 20px 80px}
+  /* 顶部 */
   header.hero{
-    padding:64px 24px 48px; text-align:center;
-    background:linear-gradient(135deg,#6c8cff22,#36d1b722);
+    padding:56px 24px 40px; text-align:center;
+    background:radial-gradient(1000px 400px at 50% -40%,#2a356b 0%,transparent 60%),
+               linear-gradient(135deg,#6c8cff18,#36d1b718);
     border-bottom:1px solid var(--line);
   }
   .hero h1{
-    margin:0 0 14px; font-size:clamp(26px,4.5vw,42px); font-weight:800;
-    background:linear-gradient(90deg,#8fa6ff,#36d1b7); -webkit-background-clip:text;
-    background-clip:text; color:transparent; letter-spacing:.5px;
+    margin:0 0 12px; font-size:clamp(24px,4vw,38px); font-weight:800; letter-spacing:.3px;
+    background:linear-gradient(90deg,#8fa6ff,#36d1b7);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .hero .sub{color:var(--muted); font-size:15px}
-  .badges{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:22px}
-  .badge{
-    background:#ffffff0d; border:1px solid var(--line); color:var(--text);
-    padding:6px 14px; border-radius:999px; font-size:13px; backdrop-filter:blur(6px);
-  }
+  .hero .sub{color:var(--muted); font-size:15px; max-width:760px; margin:0 auto}
+  .badges{display:flex; flex-wrap:wrap; gap:9px; justify-content:center; margin-top:20px}
+  .badge{background:#ffffff0d; border:1px solid var(--line); padding:5px 13px; border-radius:999px; font-size:12.5px}
   .badge b{color:var(--accent2)}
+  /* 布局 */
+  .layout{display:flex; max-width:1280px; margin:0 auto; gap:28px; padding:0 20px}
+  nav.toc{
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
+    width:230px; flex:none; padding:26px 4px 40px; border-right:1px solid var(--line);
+  }
+  nav.toc h4{margin:0 0 10px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px}
+  nav.toc a{
+    display:block; color:var(--muted); text-decoration:none; font-size:13.5px;
+    padding:6px 10px; border-radius:8px; border-left:2px solid transparent; transition:.15s;
+  }
+  nav.toc a:hover{color:var(--text); background:#ffffff08; border-left-color:var(--accent)}
+  main{flex:1; min-width:0; padding:30px 0 90px}
+  /* 区块 */
   section{
     background:var(--panel); border:1px solid var(--line); border-radius:16px;
-    padding:28px 26px; margin-top:26px; box-shadow:0 10px 30px #0006;
+    padding:26px 26px; margin-bottom:24px; scroll-margin-top:18px;
   }
   h2{
-    margin:0 0 18px; font-size:21px; display:flex; align-items:center; gap:10px;
-    padding-bottom:12px; border-bottom:1px dashed var(--line);
+    margin:0 0 18px; font-size:21px; display:flex; align-items:center; gap:11px;
+    padding-bottom:12px; border-bottom:1px dashed var(--line); scroll-margin-top:18px;
   }
-  h2 .n{
-    flex:none; width:30px; height:30px; border-radius:9px; font-size:15px;
-    display:grid; place-items:center; color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent2));
-  }
-  .lead{
-    font-size:16px; background:linear-gradient(90deg,#6c8cff14,#36d1b714);
-    border-left:4px solid var(--accent); padding:16px 18px; border-radius:10px; color:#dfe4f7;
-  }
-  table{width:100%; border-collapse:collapse; margin-top:6px; font-size:14.5px}
-  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line)}
-  thead th{color:var(--muted); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.5px}
-  tbody tr:hover{background:#ffffff08}
-  td.dim{color:var(--accent2); font-weight:600}
-  code{
-    background:#0c0f1c; border:1px solid var(--line); padding:2px 7px;
-    border-radius:6px; font-size:13px; color:#9fd3ff;
-  }
-  pre.diagram{
-    background:#0a0d18; border:1px solid var(--line); border-radius:12px;
-    padding:18px; overflow:auto; font-family:"Cascadia Code",Consolas,monospace;
-    font-size:12.5px; line-height:1.55; color:#bcd0ff;
-  }
-  ul.clean{list-style:none; padding:0; margin:0}
-  ul.clean li{
-    padding:12px 14px 12px 40px; position:relative; border-radius:10px;
-    border:1px solid var(--line); margin-bottom:10px; background:var(--panel2);
-  }
-  ul.clean li::before{
-    content:"▸"; position:absolute; left:16px; top:11px; color:var(--accent2); font-weight:700;
-  }
+  h2 .n{flex:none; width:30px; height:30px; border-radius:9px; font-size:14px; font-weight:700;
+    display:grid; place-items:center; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2))}
+  h3{margin:26px 0 12px; font-size:16.5px; color:#cdd6ff}
+  h4{margin:18px 0 8px; font-size:14.5px; color:var(--accent2)}
+  p{margin:10px 0}
+  .lead{font-size:15.5px; background:linear-gradient(90deg,#6c8cff14,#36d1b714);
+    border-left:4px solid var(--accent); padding:15px 18px; border-radius:10px; color:#dfe4f7}
+  .quote{border-left:4px solid var(--accent2); background:#36d1b70d; padding:13px 16px; border-radius:10px; font-style:italic; color:#d7f5ee}
+  /* 表格 */
+  .tw{overflow-x:auto; margin:6px 0 4px}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+  thead th{color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap}
+  tbody tr:hover{background:#ffffff06}
+  td.dim,th.dim{color:var(--accent2); font-weight:600; white-space:nowrap}
+  /* 代码 */
+  code{background:#0c0f1c; border:1px solid var(--line); padding:1px 6px; border-radius:5px; font-size:12.5px; color:var(--code)}
+  pre.code{background:#0a0d18; border:1px solid var(--line); border-radius:12px; padding:16px; overflow:auto;
+    font-family:"Cascadia Code",Consolas,monospace; font-size:12.5px; line-height:1.55; color:#bcd0ff}
+  pre.code .c{color:#5b6488}
+  /* mermaid */
+  .mermaid{background:#0a0d18; border:1px solid var(--line); border-radius:12px; padding:16px; margin:12px 0; text-align:center; overflow-x:auto}
+  /* 列表 */
+  ul.clean{list-style:none; padding:0; margin:8px 0}
+  ul.clean li{padding:10px 14px 10px 36px; position:relative; border-radius:10px;
+    border:1px solid var(--line); margin-bottom:9px; background:var(--panel2); font-size:14px}
+  ul.clean li::before{content:"▸"; position:absolute; left:14px; top:10px; color:var(--accent2); font-weight:700}
   ul.clean li b{color:#fff}
-  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:6px; margin-right:8px; vertical-align:middle}
+  ul.dead li::before{content:"✕"; color:var(--bad)}
+  /* 标签 */
+  .tag{display:inline-block; font-size:10.5px; font-weight:700; padding:2px 8px; border-radius:5px; margin-right:6px; vertical-align:middle; white-space:nowrap}
   .t-p0{background:#ff6b6b22; color:var(--p0); border:1px solid #ff6b6b55}
   .t-p1{background:#ffb45422; color:var(--p1); border:1px solid #ffb45455}
-  .t-warn{background:#ffd16622; color:var(--warn); border:1px solid #ffd16655}
+  .t-p2{background:#54c7ec22; color:var(--p2); border:1px solid #54c7ec55}
+  .t-p3{background:#a0a8c822; color:var(--p3); border:1px solid #a0a8c855}
   .t-ok{background:#36d1b722; color:var(--ok); border:1px solid #36d1b755}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-top:6px}
-  .card{
-    background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:16px;
-  }
-  .card .k{color:var(--muted); font-size:13px}
-  .card .v{font-size:20px; font-weight:800; margin-top:4px; color:#fff}
-  .timeline{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-top:6px}
-  .phase{
-    position:relative; background:var(--panel2); border:1px solid var(--line);
-    border-radius:12px; padding:18px; text-align:center;
-  }
-  .phase .stage{font-size:17px; font-weight:800; color:#fff}
-  .phase .dur{color:var(--accent2); font-weight:700; margin-top:6px; font-size:14px}
-  .price{
-    margin-top:14px; padding:14px 16px; border-radius:10px;
-    background:#6c8cff10; border:1px dashed var(--accent); font-size:14.5px; color:#dfe4f7;
-  }
-  .files{font-size:13.5px}
-  .files .row{padding:8px 0; border-bottom:1px solid var(--line); display:flex; gap:10px; flex-wrap:wrap}
-  .files .row:last-child{border:none}
-  .files .lbl{color:var(--accent2); font-weight:700; flex:none; min-width:64px}
-  .files .pth{color:var(--muted); word-break:break-all}
-  footer{text-align:center; color:var(--muted); font-size:13px; margin-top:40px; padding-top:24px; border-top:1px solid var(--line)}
+  .t-warn{background:#ffd16622; color:var(--warn); border:1px solid #ffd16655}
+  .t-bad{background:#ff6b6b22; color:var(--bad); border:1px solid #ff6b6b55}
+  .star{color:var(--warn); letter-spacing:-1px}
+  .sev-high{color:var(--bad); font-weight:700}
+  .sev-mid{color:var(--warn); font-weight:700}
+  /* 卡片网格 */
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:13px; margin:8px 0}
+  .card{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:15px}
+  .card .k{color:var(--muted); font-size:12.5px}
+  .card .v{font-size:19px; font-weight:800; margin-top:4px; color:#fff}
+  .card .d{color:var(--accent2); font-size:12.5px; margin-top:3px}
+  /* 时间轴 */
+  .timeline{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:13px; margin:10px 0}
+  .phase{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:16px; text-align:center}
+  .phase .stage{font-size:16px; font-weight:800; color:#fff}
+  .phase .dur{color:var(--accent2); font-weight:700; margin-top:5px; font-size:13.5px}
+  .phase .cost{color:var(--muted); font-size:12.5px; margin-top:4px}
+  /* 注解框 */
+  .note{padding:12px 15px; border-radius:10px; font-size:13.5px; margin:12px 0}
+  .note.warn{background:#ffd1660d; border:1px dashed var(--warn)}
+  .note.info{background:#6c8cff0d; border:1px dashed var(--accent)}
+  footer{text-align:center; color:var(--muted); font-size:13px; margin:30px auto 50px; max-width:1280px; padding:24px 20px 0; border-top:1px solid var(--line)}
   a{color:var(--accent)}
+  /* 移动端 */
+  @media(max-width:880px){
+    nav.toc{display:none}
+    .layout{padding:0 14px}
+    section{padding:20px 16px}
+  }
 </style>
 </head>
 <body>
 <header class="hero">
-  <h1>🎯 AI 图纸分析三大需求 · 最终调研报告</h1>
-  <div class="sub">客户 CAD 图纸智能解析 · 设备选型 · 组态图自动生成 — 全栈技术选型与商业化路径</div>
+  <h1>🎯 AI 图纸分析三大需求 · 端到端架构与商业化最终调研报告</h1>
+  <div class="sub">客户 CAD 图纸（天正建筑/电气为主）智能解析 → 设备配置清单 · CT-电缆-断路器匹配校验 · 组态图自动生成 —— 全栈国产化技术选型、4 周 Demo 设计与商业化路径</div>
   <div class="badges">
     <span class="badge">📅 <b>2026-06-29</b></span>
     <span class="badge">⚙️ <b>11</b> 个并行 worker</span>
     <span class="badge">📚 <b>200+</b> 来源</span>
-    <span class="badge">🧪 <b>~50</b> 个验证脚本</span>
-    <span class="badge">🌊 <b>2</b> 轮饱和波</span>
+    <span class="badge">🧪 <b>~30</b> 个验证脚本</span>
+    <span class="badge">🌊 <b>2</b> 轮饱和波 (W1×6 + W2×5)</span>
+    <span class="badge">📄 综合报告 <b>13 节 / 1100+ 行</b></span>
   </div>
 </header>
 
-<div class="wrap">
+<div class="layout">
+  <!-- 目录 -->
+  <nav class="toc">
+    <h4>目录</h4>
+    <a href="#s0">★ 核心结论速览</a>
+    <a href="#s1">1 · 总体技术架构</a>
+    <a href="#s2">2 · 三大需求 Pipeline</a>
+    <a href="#s3">3 · 技术选型决策矩阵</a>
+    <a href="#s4">4 · 共享能力 (DRY)</a>
+    <a href="#s5">5 · 统一数据模型</a>
+    <a href="#s6">6 · 4 周 Demo 计划</a>
+    <a href="#s7">7 · 商业化建议</a>
+    <a href="#s8">8 · 风险与缓解</a>
+    <a href="#s9">9 · 核心结论与推荐</a>
+    <a href="#s11">11 · Wave 2 补强发现</a>
+    <a href="#s12">12 · 下一步 LEAD 清单</a>
+    <a href="#s13">13 · 一句话总结</a>
+    <a href="#src">📁 来源与产物</a>
+  </nav>
 
-  <!-- 1 -->
-  <section id="conclusion">
-    <h2><span class="n">1</span>核心结论（一句话）</h2>
+  <main>
+
+  <!-- 速览 -->
+  <section id="s0">
+    <h2><span class="n">★</span>核心结论速览</h2>
     <p class="lead">
-      3 大需求共享同一套 <b>CAD 解析 + 设备对象 + 规则引擎</b>，差异化只在输出层；
-      <b>Qwen2.5-VL + YOLO + BGE-M3 + AntV G6 + json-rules-engine + openpyxl</b> 全栈国产化，
-      <b>4 周 Demo + 6 月 MVP + 12 月企业版</b>，<b>200–500 万</b>达 PMF。
+      3 大需求共享同一套 <b>CAD 解析 + 设备对象库 + 规则引擎</b>，差异化只在<b>输出层</b>；
+      <b>Qwen2.5-VL + YOLOv11-OBB + PP-OCRv6 + BGE-M3 + AntV G6 + json-rules-engine + openpyxl</b> 全栈国产合规，
+      <b>4 周 Demo + 6 月 MVP + 12 月企业版</b>，<b>200–500 万</b>投入达产品-市场匹配 (PMF)。
+      直接复用 <code>xiaowulai-s</code> 的 <code>DEVICE_TYPE_CN</code> 字典省 2–3 周，套用 <code>cad-ai-agent</code> 的 context_builder 省 1–2 周 prompt 工程。
     </p>
-  </section>
-
-  <!-- 2 -->
-  <section id="stack">
-    <h2><span class="n">2</span>11 个 worker 综合推荐 · 8 大核心技术选型</h2>
-    <p style="color:var(--muted);margin-top:-6px">按优先级 <span class="tag t-p0">P0</span> → <span class="tag t-p2" style="background:#54c7ec22;color:var(--p2);border:1px solid #54c7ec55">P2</span></p>
-    <table>
-      <thead><tr><th>维度</th><th>P0 推荐</th></tr></thead>
+    <div class="grid">
+      <div class="card"><div class="k">DRY 复用率</div><div class="v">~60%</div><div class="d">CAD 解析一次 · 设备对象用三次</div></div>
+      <div class="card"><div class="k">单图端到端</div><div class="v">≤ 90s</div><div class="d">解析+识别+选型+出图</div></div>
+      <div class="card"><div class="k">达 PMF 投入</div><div class="v">200–500 万</div><div class="d">6–12 个月</div></div>
+      <div class="card"><div class="k">机会窗口</div><div class="v">国产无对手</div><div class="d">天正/博超/利驰均无 AI</div></div>
+    </div>
+    <h4>8 大核心技术选型（P0 → P2）</h4>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">维度</th><th>P0 推荐</th><th>选型理由（节选）</th></tr></thead>
       <tbody>
-        <tr><td class="dim">CAD 解析</td><td><code>ezdxf 1.4.4</code> + ODA File Converter</td></tr>
-        <tr><td class="dim">设备检测</td><td><code>YOLOv11-OBB</code> + <code>PP-OCRv6</code></td></tr>
-        <tr><td class="dim">关系推理</td><td><code>Qwen2.5-VL-72B</code>（国产合规）</td></tr>
-        <tr><td class="dim">选型规则</td><td><code>json-rules-engine</code> + DMN 决策表</td></tr>
-        <tr><td class="dim">RAG 检索</td><td><code>BGE-M3</code> + <code>BGE-Reranker</code> + <code>pgvector</code></td></tr>
-        <tr><td class="dim">组态图</td><td><code>AntV G6</code> + Mermaid + mingrammer/diagrams</td></tr>
-        <tr><td class="dim">Excel 输出</td><td><code>openpyxl</code> + Jinja2 + Pandera</td></tr>
-        <tr><td class="dim">数据复用</td><td>xiaowulai-s 的 <code>DEVICE_TYPE_CN</code> 字典直接拷贝</td></tr>
+        <tr><td class="dim">CAD 解析</td><td><code>ezdxf 1.4.4</code> + ODA File Converter</td><td>Python 生态事实标准；ODA 免费批量、可容器化</td></tr>
+        <tr><td class="dim">设备检测</td><td><code>YOLOv11-OBB</code> + <code>PP-OCRv6</code></td><td>Khan 2024 微调 F1=93.5%；PP-OCRv6 34.5M 超 Qwen3-VL-235B</td></tr>
+        <tr><td class="dim">关系推理</td><td><code>Qwen2.5-VL-72B</code></td><td>bbox 定位、JSON 输出、中文强、国产合规</td></tr>
+        <tr><td class="dim">选型规则</td><td><code>json-rules-engine</code> + DMN 决策表</td><td>30–200 条规则未到 Rete 临界；JSON DSL 轻量易维护</td></tr>
+        <tr><td class="dim">RAG 检索</td><td><code>BGE-M3</code> + <code>BGE-Reranker</code> + <code>pgvector</code></td><td>中文 SOTA、FlagOpen 国产；与业务同库 SQL JOIN</td></tr>
+        <tr><td class="dim">组态图</td><td><code>AntV G6</code> + Mermaid + mingrammer/diagrams</td><td>嵌入/交互/报告三端覆盖，国产优先</td></tr>
+        <tr><td class="dim">Excel 输出</td><td><code>openpyxl</code> + Jinja2 + Pandera</td><td>5w 行 28.34s 可接受；模板灵活+双层校验</td></tr>
+        <tr><td class="dim">数据复用</td><td><code>DEVICE_TYPE_CN</code> 字典直接拷贝</td><td>xiaowulai-s 16 类电气元件 IEC 标准映射</td></tr>
       </tbody>
-    </table>
+    </table></div>
   </section>
 
-  <!-- 3 -->
-  <section id="shared">
-    <h2><span class="n">3</span>三个需求共享技术栈</h2>
-<pre class="diagram">客户 CAD ─▶ ODA Converter ─▶ ezdxf 解析 ─▶ 设备对象库 (Pydantic)
-                                                │
-                       ┌──────────────┬─────────┴─────────┐
-                       ▼              ▼                   ▼
-                 需求一: 选型清单   需求二: CT-电缆匹配    需求三: 组态图
-                 RAG + 规则引擎    规则引擎 + 数学计算     拓扑图算法
-                       │              │                   │
-                       ▼              ▼                   ▼
-                   openpyxl      Markdown + Excel     Mermaid + G6 + PNG</pre>
-    <p class="lead" style="border-color:var(--accent2);background:#36d1b714">
-      <b>DRY 核心：</b>CAD 解析一次，设备对象复用三次，节省约 <b>60%</b> 重复工作量。
-    </p>
-  </section>
-
-  <!-- 4 -->
-  <section id="findings">
-    <h2><span class="n">4</span>关键发现（Wave 2 新增）</h2>
+  <!-- 1 总体架构 -->
+  <section id="s1">
+    <h2><span class="n">1</span>总体技术架构（一张图）</h2>
+    <pre class="mermaid">
+flowchart TB
+    subgraph INPUT["📥 输入层"]
+        A1[客户 CAD 图纸<br/>DWG/DXF/PDF]
+        A2[点表文件 .xlsx/.csv]
+        A3[设备配置清单 .xlsx]
+        A4[选型规则 YAML/Excel]
+        A5[参考实例 历史组态图]
+    end
+    subgraph PARSE["🔧 预处理层"]
+        B1[ODA File Converter<br/>DWG→DXF]
+        B2[ezdxf 解析<br/>块/图层/属性]
+        B3[PyMuPDF 渲染 300-600dpi]
+        B4[Real-ESRGAN 超分]
+        B5[openpyxl read_only]
+    end
+    subgraph AI["🧠 AI 识别层"]
+        C1[YOLOv11-OBB<br/>30-80 类符号]
+        C2[PP-OCRv6<br/>中文标号+参数]
+        C3[Grounding DINO 零样本]
+        C4[Qwen2.5-VL-72B<br/>关系推理/JSON]
+    end
+    subgraph OBJ["📦 结构化层"]
+        D1[设备对象库 Pydantic<br/>柜/CT/断路器/电缆/回路]
+        D2[拓扑关系图]
+        D3[项目元数据]
+    end
+    subgraph LOGIC["⚙️ 业务逻辑层"]
+        E1[json-rules-engine<br/>DMN 决策表]
+        E2[BGE-M3 + Reranker<br/>RAG 选型库]
+        E3[LangGraph Agent<br/>Self-RAG]
+        E4[电气规则引擎<br/>GB50054/DLT5222]
+    end
+    subgraph OUT["📤 输出层"]
+        F1[Excel 设备清单]
+        F2[校验报告 JSON+MD]
+        F3[HTML 组态图 Mermaid]
+        F4[PNG/PDF diagrams]
+        F5[可交互拓扑 G6]
+        F6[异常提示+建议]
+    end
+    A1-->B1-->B2; A1-->B3-->B4; A2-->B5; A3-->B5; A4-->E2; A5-->F3
+    B2-->C1 & C2; B4-->C1 & C2 & C3; B5-->D3
+    C1 & C2-->D1; C3-->C4; D1-->D2; D2-->E1 & E4; D1-->E2; D2-->E3
+    E1-->F1; E2-->E3; E3-->F1 & F2; E4-->F2 & F6; D2-->F3 & F4 & F5
+    F1 & F2 & F3 & F4 & F5-->F6
+    </pre>
+    <h4>架构关键决策</h4>
     <ul class="clean">
-      <li><b>直接对标项目：</b> <code>xiaowulai-s/Industrial-Drawing-Recognition</code> 含 <code>DEVICE_TYPE_CN</code> 字典（16 类电气元件 / IEC 标准），可省 2–3 周标注工作。</li>
-      <li><b>2026 是电气 CAD「AI 元年」：</b> WSCAD / EPLAN / 浩辰 / 力控 均推出 AI Copilot；国产天正 / 博超 / 利驰 <b>尚无 AI 能力</b> → 机会窗口。</li>
-      <li><b>生产案例验证：</b> 南方电网「大瓦特」效率 ×5；蔚来 × EPLAN Cloud 审核「数周 → 数小时」。</li>
-      <li><b>天正 <code>TCH_</code> 前缀已就绪：</b> TCH_WALL / TCH_Door / TCH_Window / TCH_Column 等可在 ezdxf 中识别。</li>
-      <li><span class="tag t-warn">协议红线</span> <code>AUTOCAD-ELECTRICAL-MCP</code> 是 AGPL v3 ⚠ 商业不可用；但改 <code>providers/openai_compat.py</code> 的 base_url 即可跑国产 VLM。</li>
+      <li><b>三层分离</b>：预处理(纯数据) / AI 识别(感知) / 业务逻辑(决策)，各层可独立替换升级。</li>
+      <li><b>JSON Schema 中心化</b>：设备对象库 <code>D1</code> 是所有需求共享的「事实单一源」，避免重复识别 [DRY]。</li>
+      <li><b>规则强校验</b>：选型 + 电气匹配都走 <code>json-rules-engine + DMN</code>，<b>LLM 只做提参/解释，不允许直接出选型结论</b>。</li>
+      <li><b>国产化优先</b>：YOLOv11-OBB / PP-OCRv6 / Qwen2.5-VL / AntV G6 全部国产合规。</li>
     </ul>
   </section>
 
-  <!-- 5 -->
-  <section id="commercial">
-    <h2><span class="n">5</span>商业化路径</h2>
+  <!-- 2 三大需求 Pipeline -->
+  <section id="s2">
+    <h2><span class="n">2</span>三大需求详细 Pipeline</h2>
+
+    <h3>2.1 需求一：CAD → 设备配置清单（Auto Claw）</h3>
+    <pre class="mermaid">
+flowchart LR
+    A[DWG/DXF]-->B[ODA Converter]-->C[ezdxf 提取<br/>块/图层/属性]
+    C-->D{有 DXF 块属性?}
+    D-- 是 -->E[直接读块属性]
+    D-- 否 -->F[PyMuPDF 渲染]-->G[YOLOv11-OBB 检测]-->H[PP-OCRv6 读参数]
+    E & H-->I[Qwen2.5-VL 关系推理]-->J[设备对象 Pydantic]
+    J-->K[RAG 召回 Top-20]-->L[Reranker 精排 Top-5]-->M[LLM 提议型号]
+    M-->N[json-rules-engine 强校验]
+    N-- 失败 -->O[Self-RAG 循环修正]-->N
+    N-- 通过 -->P[Excel 模板 openpyxl+Jinja2]-->Q[设备配置清单 xlsx]
+    </pre>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">节点</th><th>工具/模型</th><th>选型理由</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">DWG→DXF</td><td>ODA File Converter</td><td>免费、批量、Linux 容器化</td></tr>
+        <tr><td class="dim">DXF 解析</td><td>ezdxf 1.4.4</td><td>原生 Python，支持图层/块/属性</td></tr>
+        <tr><td class="dim">设备检测</td><td>YOLOv11-OBB</td><td>Khan 2024 微调 F1=93.5%</td></tr>
+        <tr><td class="dim">中文 OCR</td><td>PP-OCRv6 34.5M</td><td>+5.1% 准确率、50 语种、国产合规</td></tr>
+        <tr><td class="dim">关系推理</td><td>Qwen2.5-VL-72B</td><td>bbox 定位、JSON 输出、中文强</td></tr>
+        <tr><td class="dim">选型 RAG</td><td>BGE-M3 + BGE-Reranker-v2-m3</td><td>中文 SOTA、国产 FlagOpen</td></tr>
+        <tr><td class="dim">规则引擎</td><td>json-rules-engine</td><td>JSON DSL、3.1k⭐、轻量、Active</td></tr>
+        <tr><td class="dim">Excel 输出</td><td>openpyxl + Jinja2 模板</td><td>5w 行 28.34s、灵活样式</td></tr>
+      </tbody>
+    </table></div>
+    <h4>Excel 输出列设计（需求一）</h4>
+    <pre class="code">项目名 | 客户 | 设计阶段 | 电压等级 | 变压器容量 |
+列头柜类型 | 数量 | 进线回路 | 出线回路数 | 出线回路明细 |
+主开关型号 | 母线电流 | 短路耐受 | IP 等级 | 补偿容量 kVar |
+选型结果 | 选型依据(规则ID) | 置信度 | 人工复核标记</pre>
+    <div class="note info">⏱️ <b>性能预估（单张 10kV 配电系统图）</b>：解析 5–10s · 检测+OCR 15–30s · 选型 RAG+规则 10–20s · Excel 生成 2–5s → <b>合计 30–65s/图，完全可交互</b>。</div>
+
+    <h3>2.2 需求二：CT-电缆-断路器匹配分析</h3>
+    <pre class="mermaid">
+flowchart TB
+    A1[CAD 设备配置清单]-->C
+    A2[互感器规格库 YAML]-->C
+    A3[电缆规格库 YAML]-->C
+    A4[断路器规格库 YAML]-->C
+    C[设备对象库 Pydantic Facts]
+    C-->D[CT-断路器匹配<br/>动热稳定校验]
+    C-->E[电缆汇总与选型<br/>载流量+压降+短路]
+    C-->F[CT-电缆匹配<br/>变比+精度+负荷]
+    C-->G[列头柜 CT 配置<br/>一二次侧校验]
+    D & E & F & G-->H[异常项聚合 Pydantic]
+    H-->I[结论+改进建议 LLM 解释]
+    I-->J[结构化报告 JSON+MD+Excel]
+    </pre>
+    <h4>4 类核心校验（基于 GB 50054 / DL/T 5222 / IEC 61850）</h4>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">校验项</th><th>规则</th><th>引用</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">CT-断路器匹配</td><td>CT 动稳定电流 ≥ 断路器短路峰值；热稳定 ≥ I²t</td><td>GB 50054 §3.2.9</td></tr>
+        <tr><td class="dim">电缆汇总与选型</td><td>载流量 I_z ≥ I_n（温度/海拔/谐波降容）；压降 ΔU ≤ 5%；短路耐受 I²t 达标</td><td>DL/T 5222 附表 D.11</td></tr>
+        <tr><td class="dim">CT-电缆匹配</td><td>CT 一次额定电流 ≥ 回路工作电流；精度满足计量/保护；二次负荷 ≤ 额定负荷</td><td>IEC 61850-9-2</td></tr>
+        <tr><td class="dim">列头柜 CT 配置</td><td>三相 CT 极性正确；N/PE 配置；二次接线防开路；多 CT 累加误差</td><td>GB 51348-2019</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn">⚠️ <b>缺口提示</b>：<code>ct-cb-cable</code> 电气匹配专项报告目录为空，本节规则<b>基于公开标准 + 间接证据</b>综合，建议下一轮补强 LEAD-14/15/16（海拔/谐波/CT 二次负荷专项）。</div>
+    <h4>业务逻辑实现（json-rules-engine 示例）</h4>
+    <pre class="code">{
+  "name": "CT 动稳定校验",
+  "conditions": { "all": [
+    { "fact": "ct_dynamic_stable_ka", "operator": "greaterThanInclusive",
+      "value": { "fact": "breaker_peak_ka" } },
+    { "fact": "ct_thermal_stable_ka2s", "operator": "greaterThanInclusive",
+      "value": { "fact": "breaker_i2t" } }
+  ]},
+  "event": { "type": "ct_cb_match",
+    "params": { "status": "pass", "rule_id": "ct-cb-001" } }
+}</pre>
+    <h4>结构化报告输出（异常项示例）</h4>
+    <pre class="code">{
+  "report_id": "CT-CABLE-2026-001",
+  "project": {"name": "数据中心A", "voltage_kv": 10, "capacity_kva": 2500},
+  "summary": {"ct_cb_checks": 24, "pass": 22, "fail": 2, ...},
+  "anomalies": [{
+    "id": "ANOM-001", "severity": "high",
+    "type": "ct_dyn_stable_insufficient",
+    "device_pair": {"ct": "CT-3", "breaker": "QF-5"},
+    "evidence": {"ct_ka": 25, "breaker_peak_ka": 31.5},
+    "suggestion": "CT 更换为 40kA 动稳定 或 断路器分断容量降至 25kA"
+  }],
+  "conclusion": "建议 5 项整改,详见 ANOM-001~005"
+}</pre>
+
+    <h3>2.3 需求三：CAD + 点表 + 清单 → 组态图</h3>
+    <pre class="mermaid">
+flowchart LR
+    A1[CAD 设备对象]-->C
+    A2[点表 Excel]-->B[openpyxl read_only]-->C
+    A3[设备配置清单]-->C
+    A4[组态图需求 自然语言]-->D[Qwen3 Function Call]
+    A5[参考实例 历史组态图]-->E[视觉 RAG]
+    C[ScadaTopology JSON Schema]
+    D-->C; E-->C
+    C-->G1[Mermaid CLI HTML]
+    C-->G2[diagrams PNG/PDF]
+    C-->G3[AntV G6 v5 交互大图]
+    C-->G4[Graphviz SVG fallback]
+    G1 & G2 & G3 & G4-->H[异常检测 点表对账]-->I[组态图+异常提示]
+    </pre>
+    <h4>3 端输出策略</h4>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">场景</th><th>工具</th><th>优势</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">HTML 嵌入</td><td>Mermaid CLI <code>mmdc</code></td><td>88.9k⭐、事实标准、GitHub 原生支持</td></tr>
+        <tr><td class="dim">PNG/PDF 报告</td><td>mingrammer/diagrams + Graphviz</td><td>Python 包、CI 友好、零交互</td></tr>
+        <tr><td class="dim">可交互大图</td><td>AntV G6 v5</td><td>国产、12.2k⭐、GPU 加速、中文好</td></tr>
+        <tr><td class="dim">超大规模 &gt;1000 节点</td><td>Cytoscape.js + fcose</td><td>11.1k⭐、WebGL</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>ScadaRenderer 适配层</b>：一次 JSON 输入 → 渲染 Mermaid/Dot/G6/ECharts/PlantUML 5 种格式；内置层级着色（现场/控制/管理）+ 字体兜底（Microsoft YaHei）。</p>
+  </section>
+
+  <!-- 3 决策矩阵 -->
+  <section id="s3">
+    <h2><span class="n">3</span>技术选型决策矩阵</h2>
+    <h3>3.1 三大需求 × 5 个技术维度</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">维度</th><th>需求一（设备清单）</th><th>需求二（CT-电缆匹配）</th><th>需求三（组态图）</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">CAD 解析</td><td>ezdxf + ODA Converter</td><td>（复用）</td><td>（复用）</td></tr>
+        <tr><td class="dim">AI 识别</td><td>YOLOv11-OBB + PP-OCRv6 + Qwen2.5-VL</td><td>（复用设备对象）</td><td>（复用设备对象）</td></tr>
+        <tr><td class="dim">结构化层</td><td>Pydantic v2</td><td>Pydantic v2 + Pandera</td><td>Pydantic v2 + ScadaTopology</td></tr>
+        <tr><td class="dim">业务逻辑</td><td>RAG(BGE-M3) + json-rules-engine</td><td>规则引擎 + 数学计算</td><td>拓扑图算法 + 异常检测</td></tr>
+        <tr><td class="dim">输出</td><td>openpyxl + Jinja2</td><td>Markdown + Excel</td><td>Mermaid + G6 + Graphviz</td></tr>
+      </tbody>
+    </table></div>
+    <h3>3.2 核心选型 vs 备选（完整决策表）</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">维度</th><th>推荐选型</th><th>备选</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">CAD 解析</td><td>ezdxf 1.4.4 + ODA Converter</td><td>libredwg / Aspose.CAD(商业)</td><td>Python 事实标准；ODA 免费批量</td></tr>
+        <tr><td class="dim">需求一识别</td><td>YOLOv11-OBB + Qwen2.5-VL 级联</td><td>单 VLM 直读 / Florence-2</td><td>微调 0.23B 超 GPT-4o 52.4% F1</td></tr>
+        <tr><td class="dim">中文 OCR</td><td>PaddleOCR PP-OCRv6</td><td>PaddleOCR-VL / Tesseract</td><td>34.5M 超 Qwen3-VL-235B、Apache-2.0</td></tr>
+        <tr><td class="dim">关系推理 LLM</td><td>Qwen2.5-VL-72B</td><td>GPT-4o / Claude / InternVL3</td><td>中文 SOTA、国产合规；跨境不合规</td></tr>
+        <tr><td class="dim">需求一规则</td><td>json-rules-engine + DMN</td><td>Drools / Easy Rules / 纯 prompt</td><td>30-200 条未到 Rete 临界、JSON 易维护</td></tr>
+        <tr><td class="dim">需求二规则</td><td>json-rules-engine + Pandera</td><td>Drools DMN / Great Expectations</td><td>参数上下界+布尔→DMN 天然适配</td></tr>
+        <tr><td class="dim">需求二知识</td><td>RAG + BGE-M3 + Reranker</td><td>纯 prompt / OpenAI / m3e</td><td>中文 SOTA、多粒度、FlagOpen 11.9k⭐</td></tr>
+        <tr><td class="dim">RAG 框架</td><td>LangGraph + DB-GPT 备选</td><td>LlamaIndex / Haystack</td><td>状态机最灵活、Self-RAG 最标准</td></tr>
+        <tr><td class="dim">向量库</td><td>pgvector + Qdrant Edge</td><td>Milvus(重) / Chroma(POC)</td><td>与元数据同库、SQL JOIN、ACID</td></tr>
+        <tr><td class="dim">LLM Agent</td><td>Qwen3-32B / GLM-4</td><td>DeepSeek-V3 / GPT-5(跨境)</td><td>国产合规、function call 稳定</td></tr>
+        <tr><td class="dim">需求三渲染</td><td>Mermaid + AntV G6 + diagrams</td><td>D2 / Graphviz / PlantUML</td><td>三端覆盖、国产优先 G6</td></tr>
+        <tr><td class="dim">Excel 输出</td><td>openpyxl + Jinja2 + Pandera</td><td>xlsxwriter(快5×) / xlwings</td><td>5w 行 28s 可接受、模板灵活</td></tr>
+        <tr><td class="dim">点表解析</td><td>openpyxl read_only + data_only</td><td>pandas+xlrd / pyexcel</td><td>5w 行 16.65s 内存 4.6MB</td></tr>
+        <tr><td class="dim">数据校验</td><td>Pydantic v2 + Pandera 双层</td><td>Great Expectations(重)</td><td>单条强类型 + 集合级校验</td></tr>
+      </tbody>
+    </table></div>
+    <h3>3.3 国产合规 vs 国际旗舰 速查</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">任务</th><th>国际旗舰</th><th class="dim">国产合规首选</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">VLM</td><td>GPT-4o / Claude Sonnet 4.6</td><td class="dim">Qwen2.5-VL-72B / GLM-4.6</td></tr>
+        <tr><td class="dim">OCR</td><td>Tesseract / EasyOCR</td><td class="dim">PaddleOCR PP-OCRv6</td></tr>
+        <tr><td class="dim">嵌入</td><td>OpenAI text-embedding-3</td><td class="dim">BGE-M3 / BGE-large-zh</td></tr>
+        <tr><td class="dim">图渲染</td><td>D3.js / Cytoscape.js</td><td class="dim">AntV G6 / ECharts</td></tr>
+        <tr><td class="dim">RAG 框架</td><td>LangChain</td><td class="dim">LangGraph + DB-GPT / Chatchat</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 4 DRY -->
+  <section id="s4">
+    <h2><span class="n">4</span>共享能力抽象（DRY 原则）</h2>
+    <pre class="mermaid">
+flowchart TB
+    subgraph SHARED["🔄 共享服务层 (DRY)"]
+        S1[CAD 解析服务 DWG→DXF→JSON]
+        S2[设备对象库 Pydantic Schema]
+        S3[项目元数据 name/voltage/phase/capacity]
+        S4[RAG 知识库 规则+手册+历史]
+        S5[异常检测器 Pydantic/Pandera]
+    end
+    S1-->N1[需求一]; S1-->N2[需求二]; S1-->N3[需求三]
+    S2-->N1 & N2 & N3; S3-->N1 & N2 & N3; S4-->N1 & N2; S5-->N1 & N2 & N3
+    </pre>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">服务</th><th>职责</th><th>复用率</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">CAD 解析服务</td><td>DWG→DXF→ezdxf→标准化设备 JSON</td><td><span class="tag t-ok">100%</span></td></tr>
+        <tr><td class="dim">设备对象库</td><td>Pydantic v2 模型 + 工厂方法</td><td><span class="tag t-ok">100%</span></td></tr>
+        <tr><td class="dim">项目元数据</td><td>project/version/phase/voltage/capacity</td><td><span class="tag t-ok">100%</span></td></tr>
+      </tbody>
+    </table></div>
+    <h4>一次识别，多处使用的对象流（核心 Pydantic 模型）</h4>
+    <pre class="code"><span class="c"># 共享层: 设备对象库</span>
+class Cabinet(BaseModel):
+    id: str                       <span class="c"># QF1, 列头柜-A1</span>
+    type: Literal["列头柜","补偿柜","进线柜","馈线柜"]
+    capacity_kva: float | None
+    voltage_kv: float
+    circuits: list["Circuit"]
+    main_breaker: "Breaker" | None
+    ct_devices: list["CT"]
+    bbox: tuple[int,int,int,int] | None  <span class="c"># CAD 坐标</span>
+
+class CT(BaseModel):
+    id: str; ratio: str           <span class="c"># 600/5</span>
+    accuracy_class: str           <span class="c"># 0.5/0.5/10P10</span>
+    burden_va: float; primary_a: float; secondary_a: float = 5
+    purpose: Literal["计量","保护","测量"]
+
+class Breaker(BaseModel):
+    id: str; model: str           <span class="c"># VD4-12, MTZ2 10N1</span>
+    rated_a: float; breaking_ka: float; peak_ka: float; poles: int</pre>
+    <ul class="clean">
+      <li><b>需求二（CT-电缆-断路器匹配）</b> = 对设备对象库的<b>关系运算</b>，无需重新识别。</li>
+      <li><b>需求三（组态图）</b> = 对设备对象库的<b>拓扑图可视化</b>。</li>
+      <li><b>需求一（选型）</b> = 对设备对象的<b>规则匹配 + RAG 召回</b>。</li>
+    </ul>
+  </section>
+
+  <!-- 5 数据模型 -->
+  <section id="s5">
+    <h2><span class="n">5</span>统一数据模型（Schema）</h2>
+    <h3>5.1 核心实体关系图</h3>
+    <pre class="mermaid">
+erDiagram
+    PROJECT ||--o{ CABINET : contains
+    PROJECT ||--|| META : has
+    CABINET ||--o{ CIRCUIT : has
+    CABINET ||--|| MAIN_BREAKER : "main protection"
+    CABINET ||--o{ CT : "column CT"
+    CIRCUIT ||--o{ BREAKER : "protected by"
+    CIRCUIT ||--|| CABLE : "wired by"
+    CIRCUIT ||--o{ CT : "measured by"
+    CIRCUIT }o--|| CIRCUIT : "upstream/downstream"
+    SELECTION_RULE ||--o{ CABINET : "matches"
+    PROJECT { string id PK  string name  float voltage_kv  float capacity_kva  string phase }
+    CABINET { string id PK  string type  int busbar_a  string ip_rating  int circuit_count }
+    CIRCUIT { string id PK  string from_device  string to_device  float rated_a }
+    CT { string id PK  string ratio  float burden_va  string accuracy  string purpose }
+    BREAKER { string id PK  string model  float rated_a  float breaking_ka  float peak_ka }
+    CABLE { string id PK  string spec  float section_mm2  float length_m  string installation }
+    </pre>
+    <h3>5.2 关键不变量（Schema 约束）</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">实体字段</th><th>关键约束</th><th>验证方式</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">Cabinet.busbar_a</td><td>100/250/400/630/800/1000/1250/1600/2000/2500/3150</td><td>Pydantic Literal</td></tr>
+        <tr><td class="dim">CT.ratio</td><td>整数比，一次侧 ∈ {50,100,…,6300}</td><td>Pydantic regex</td></tr>
+        <tr><td class="dim">Breaker.breaking_ka</td><td>∈ {16,20,25,31.5,40,50,63,80,100}</td><td>Pydantic Literal</td></tr>
+        <tr><td class="dim">Cable.section_mm2</td><td>∈ {1.5,2.5,4,…,240,300}</td><td>Pydantic Literal</td></tr>
+        <tr><td class="dim">Circuit.cable+breaker</td><td>载流量 I_z ≥ 断路器额定 I_n</td><td>业务规则</td></tr>
+      </tbody>
+    </table></div>
+    <h3>5.3 关系图（电气拓扑）—— 同时驱动选型/匹配/组态图</h3>
+    <pre class="mermaid">
+flowchart LR
+    GRID[电网 10kV]-->TR[T1 变压器 2500kVA]-->BUS1[母线 BUS1 4000A]
+    BUS1-->QF1[总断路器 QF1 MTZ2 40kA]
+    QF1-->CAB1[列头柜 A1 MNS-4000/65]
+    QF1-->CAB2[列头柜 A2 MNS-2500/50]
+    BUS1-->CT1[CT1 4000/5 0.5/10P10]
+    CAB1-->C1[出线回路1 YJV22-3×185]
+    CAB1-->C2[出线回路2 YJV22-3×120]
+    C1-->QF2[QF2 400A NSX400F]
+    C1-->CT2[CT2 400/5 0.5/10P10]
+    QF2-->LOAD1[负荷-1 数据中心机柜]
+    </pre>
+  </section>
+
+  <!-- 6 Demo -->
+  <section id="s6">
+    <h2><span class="n">6</span>最小可行 Demo（4 周计划）</h2>
     <div class="timeline">
-      <div class="phase"><div class="stage">Demo</div><div class="dur">4 周 · 1 月</div></div>
-      <div class="phase"><div class="stage">MVP</div><div class="dur">6 月</div></div>
-      <div class="phase"><div class="stage">企业版</div><div class="dur">12 月</div></div>
+      <div class="phase"><div class="stage">Week 1</div><div class="dur">CAD 解析 + 设备对象化</div><div class="cost">识别列头柜</div></div>
+      <div class="phase"><div class="stage">Week 2</div><div class="dur">选型规则引擎 + 清单</div><div class="cost">需求一端到端</div></div>
+      <div class="phase"><div class="stage">Week 3</div><div class="dur">CT-电缆-断路器校验</div><div class="cost">需求二端到端</div></div>
+      <div class="phase"><div class="stage">Week 4</div><div class="dur">组态图自动生成</div><div class="cost">需求三端到端</div></div>
     </div>
-    <div class="price">
-      💰 <b>定价：</b>5–30 万 / 年（SaaS） · 100 万+（私有化） · 0.5–2 元 / 图（API）
+    <h4>各周里程碑</h4>
+    <ul class="clean">
+      <li><b>Week 1</b>：DWG→DXF 管线 + YOLOv11-OBB 微调(mAP≥85%) + PP-OCRv6 + Qwen2.5-VL 关系推理 + Pydantic 化。<b>里程碑</b>：5 张样图 → 设备对象 JSON，人工核对 ≥90% 一致。</li>
+      <li><b>Week 2</b>：选型规则 YAML DSL(20 条) + json-rules-engine + RAG 知识库(BGE-M3→pgvector) + LangGraph Agent + Excel 模板。<b>里程碑</b>：CAD → Excel 清单，人工核对 ≥85% 准确。</li>
+      <li><b>Week 3</b>：电气规则库(30+ 条) + Pandera + 数学计算引擎(载流量/压降/动热稳定) + 异常聚合 + MD/Excel 双输出。<b>里程碑</b>：清单+规格库 → 异常项+建议，≥90% 准确。</li>
+      <li><b>Week 4</b>：点表解析 + 拓扑布局(dagre) + ScadaRenderer(5 格式) + 异常检测 + 端到端集成 + Demo 视频。<b>里程碑</b>：三件套 → HTML+PNG 组态图，≥90% 拓扑正确。</li>
+    </ul>
+    <h4>4 周 Demo 关键指标</h4>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">指标</th><th>目标</th><th>测量方式</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">设备识别准确率</td><td>≥ 85%（YOLO mAP ≥ 90%）</td><td>人工核对 50 套</td></tr>
+        <tr><td class="dim">选型准确率</td><td>≥ 90%（规则 100% 命中）</td><td>历史 30 套选型对比</td></tr>
+        <tr><td class="dim">CT-电缆校验召回</td><td>≥ 95%（漏报 ≤ 5%）</td><td>注入 20 异常全检出</td></tr>
+        <tr><td class="dim">组态图拓扑正确率</td><td>≥ 90%</td><td>人工核对</td></tr>
+        <tr><td class="dim">单图端到端延迟</td><td>≤ 90s</td><td>stopwatch</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note info">📦 <b>4 周交付清单</b>：3 个微服务（cad-parser / equipment-selector / scada-renderer）+ 共享 SDK（electrical-cad-sdk）+ 知识库（选型 YAML + 电气 JSON + 手册 RAG）+ 10 套脱敏样图 + 架构/API/部署/用户文档。</div>
+  </section>
+
+  <!-- 7 商业化 -->
+  <section id="s7">
+    <h2><span class="n">7</span>商业化建议</h2>
+    <h3>7.1 客户群定位</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">客户类型</th><th>切入点</th><th>客单价</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">Tier 1 大型设计院</td><td>选型自动化 + 校验自动化</td><td>30–100 万/年（私有化）</td></tr>
+        <tr><td class="dim">Tier 2 中型设计院/咨询</td><td>清单 + CT 匹配 + 组态图三合一</td><td>10–30 万/年（SaaS）</td></tr>
+        <tr><td class="dim">Tier 3 售前/总包/集成商</td><td>设备配置清单（需求一）</td><td>5–15 万/年（SaaS/API）</td></tr>
+        <tr><td class="dim">Tier 4 电力/能效服务商</td><td>CT-电缆匹配报告 + 优化建议</td><td>项目制 50–200 万</td></tr>
+      </tbody>
+    </table></div>
+    <h3>7.2 定价模式</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">模式</th><th>适用</th><th>定价</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">SaaS 年订阅</td><td>Tier 2/3</td><td>5–30 万/年（按图纸/项目数）</td></tr>
+        <tr><td class="dim">API 调用</td><td>平台/集成商</td><td>0.5–2 元/图 + 包年折扣</td></tr>
+        <tr><td class="dim">私有化部署</td><td>Tier 1 政府/电力</td><td>100–500 万/项目（含实施）</td></tr>
+        <tr><td class="dim">项目定制</td><td>Tier 4</td><td>50–200 万/项目</td></tr>
+        <tr><td class="dim">免费+增值</td><td>个人/学生</td><td>0 → 转化</td></tr>
+      </tbody>
+    </table></div>
+    <h3>7.3 与 EPLAN / 博超的差异化</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">维度</th><th>EPLAN Electric P8</th><th>博超 SuperWORKS</th><th class="dim">本方案</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">核心定位</td><td>专业电气 CAD + 元件库</td><td>国产电气 CAD + 选型</td><td class="dim">AI 自动化（输入 CAD 即输出）</td></tr>
+        <tr><td class="dim">学习成本</td><td>1–3 月</td><td>1–2 月</td><td class="dim">零学习成本（对话式）</td></tr>
+        <tr><td class="dim">数据来源</td><td>手动绘制</td><td>手动绘制</td><td class="dim">客户既有 CAD 自动解析</td></tr>
+        <tr><td class="dim">输出</td><td>接线图+元件清单</td><td>接线图+选型</td><td class="dim">Excel 清单+校验报告+组态图</td></tr>
+        <tr><td class="dim">AI 能力</td><td>eBUILD 模板</td><td>无</td><td class="dim">VLM+YOLO+RAG 全栈 AI</td></tr>
+        <tr><td class="dim">国产合规</td><td>部分</td><td>是</td><td class="dim">完全国产</td></tr>
+        <tr><td class="dim">价格</td><td>10–50 万/年起</td><td>3–15 万/次</td><td class="dim">5–30 万/年 / 100 万+ 私有化</td></tr>
+      </tbody>
+    </table></div>
+    <h4>差异化卖点</h4>
+    <ul class="clean">
+      <li><b>AI 原生</b>，不是「传统 CAD + AI 插件」——与 EPLAN/博超的本质差异。</li>
+      <li><b>输入是客户既有 CAD</b>，不是「必须用我们工具画图」——极大降低切换成本。</li>
+      <li><b>三件套输出</b>（清单+校验+组态图）一次完成——单点工具厂商只能做其一。</li>
+      <li><b>国产化合规</b>——电力/政府客户刚需；<b>可解释</b>——RAG 引用规则 ID + LLM 解释。</li>
+    </ul>
+    <h3>7.4 实施成本估算</h3>
+    <div class="timeline">
+      <div class="phase"><div class="stage">4 周 Demo</div><div class="dur">1 月</div><div class="cost">30–50 万 · 5 人</div></div>
+      <div class="phase"><div class="stage">MVP</div><div class="dur">6 月</div><div class="cost">150–250 万 · SaaS 单租户</div></div>
+      <div class="phase"><div class="stage">企业版</div><div class="dur">12 月</div><div class="cost">300–500 万 · 私有化</div></div>
+    </div>
+    <div class="note info">💰 <b>总投入预估</b>：MVP 上线 6–12 个月，<b>200–500 万</b>可达到产品-市场匹配（PMF）。另：GPU 训练算力一次性 20–50 万；标注数据 200–2000 张 @ ¥10/张 = 2–20 万。</div>
+  </section>
+
+  <!-- 8 风险 -->
+  <section id="s8">
+    <h2><span class="n">8</span>关键风险与缓解</h2>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">风险</th><th>等级</th><th>缓解</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">客户图纸隐私</td><td><span class="sev-high">高</span></td><td>默认私有化部署 / 联邦学习（只传参数）/ 数据脱敏；<b>永不上传客户原图</b></td></tr>
+        <tr><td class="dim">识别准确率不达标</td><td><span class="sev-high">高</span></td><td>4 周 Demo 验证；<b>准确率 &lt; 70% 不进入客户试点</b></td></tr>
+        <tr><td class="dim">电气规则覆盖不全</td><td><span class="sev-mid">中</span></td><td>行业专家（SI/Siemens/Schneider）顾问合作；规则库每月迭代</td></tr>
+        <tr><td class="dim">国产 VLM 幻觉</td><td><span class="sev-mid">中</span></td><td>规则强校验 + LangSmith 监控 + Self-RAG 循环</td></tr>
+        <tr><td class="dim">数据多样性不足</td><td><span class="sev-mid">中</span></td><td>ParaCAD 10M 预训练；每客户 50 张样例微调；数据增强</td></tr>
+        <tr><td class="dim">天正建筑图闭源</td><td><span class="sev-mid">中</span></td><td>ODA 转 DXF + XData + 图层名匹配 + T3 降级兜底 + OCR</td></tr>
+        <tr><td class="dim">EPLAN AI 反击/价格战</td><td><span class="sev-mid">中</span></td><td>国产合规 + AI 原生 + 定制化壁垒；跨境难渗透电力/政府</td></tr>
+        <tr><td class="dim">大图渲染性能 &gt;2000 节点</td><td><span class="sev-mid">中</span></td><td>G6/Cytoscape WebGL；服务端分页；dagre 静态布局</td></tr>
+        <tr><td class="dim">Excel 100w+ 行性能</td><td><span class="sev-mid">中</span></td><td>xlsxwriter constmem(10s/5w)；数据分页；数据库直出</td></tr>
+        <tr><td class="dim">标准更新（GB/DL/IEC）</td><td><span class="sev-mid">中</span></td><td>规则库 Git 版本化；专家季度评审；抽象规则接口</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- 9 结论与推荐 -->
+  <section id="s9">
+    <h2><span class="n">9</span>核心结论与推荐</h2>
+    <p class="quote">「CAD 解析一次，设备对象复用三次，选型/校验/组态图并行输出」—— 三个需求是同一技术栈的三个输出面，而非三个独立产品，DRY 是商业可行性的关键。</p>
+    <h4>P0 核心推荐</h4>
+    <ul class="clean">
+      <li><span class="tag t-p0">P0</span> <b>共享 CAD 解析服务</b>（DWG→DXF→ezdxf→设备 JSON）—— 三个需求共用，DRY 核心。</li>
+      <li><span class="tag t-p0">P0</span> <b>Pydantic v2 设备对象库 + 统一 ScadaTopology Schema</b> —— 一次识别，多处使用。</li>
+      <li><span class="tag t-p0">P0</span> <b>json-rules-engine + DMN 决策表</b> —— 选型+校验共用，LLM 只做提参/解释。</li>
+      <li><span class="tag t-p0">P0</span> <b>BGE-M3 + BGE-Reranker + pgvector</b> —— 国产 RAG 全栈。</li>
+      <li><span class="tag t-p1">P1</span> <b>AntV G6 v5 + Mermaid + mingrammer/diagrams</b> —— 三端组态图渲染。</li>
+      <li><span class="tag t-p1">P1</span> <b>openpyxl + Jinja2 + Pandera</b> —— Excel 输出 + 双层校验。</li>
+      <li><span class="tag t-p1">P1</span> <b>6 个月 MVP，200–500 万投入</b> —— 商业化路径清晰。</li>
+    </ul>
+    <h4>建议路线（吸取失败教训后）</h4>
+    <div class="timeline">
+      <div class="phase"><div class="stage">Phase 1</div><div class="dur">0–6 月</div><div class="cost">垂直行业标杆 · 建筑电气做透</div></div>
+      <div class="phase"><div class="stage">Phase 2</div><div class="dur">6–12 月</div><div class="cost">产品化 · 多客户复用 SaaS</div></div>
+      <div class="phase"><div class="stage">Phase 3</div><div class="dur">12–24 月</div><div class="cost">行业扩张 · 横向扩展</div></div>
     </div>
   </section>
 
-  <!-- 6 -->
-  <section id="converge">
-    <h2><span class="n">6</span>收敛决策</h2>
-    <ul class="clean">
-      <li><span class="tag t-ok">✅</span> 47 个 EXPAND 线索已分级（<b>12</b> DEAD END 已关闭，<b>35</b> OPEN 按 P0–P3 优先级）。</li>
-      <li><span class="tag t-ok">✅</span> 不再启动 Wave 3 —— 当前材料已充分。</li>
-      <li><span class="tag t-ok">✅</span> 下一波建议：真实客户样图 <b>10 套</b>采集 + 选型规则库专家共建。</li>
+  <!-- 11 Wave 2 -->
+  <section id="s11">
+    <h2><span class="n">11</span>Wave 2 补强（关键新发现）</h2>
+
+    <h3>11.1 GitHub 实战开源项目矩阵（W2-1 repo-dive）</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">优先级</th><th>可复用模块</th><th>来源项目</th><th>价值</th></tr></thead>
+      <tbody>
+        <tr><td><span class="star">★★★★★</span></td><td>DEVICE_TYPE_CN 字典（16 类电气元件）+ CONTACT_TYPE_MAP（IEC 触点）</td><td>xiaowulai-s/Industrial-Drawing-Recognition</td><td><b>直接拷贝</b>，省 2–3 周标注</td></tr>
+        <tr><td><span class="star">★★★★★</span></td><td>LLM Provider ABC（42 行抽象基类）</td><td>jeremylongshore/cad-ai-agent</td><td>ezdxf+LLM 解耦，可换 Qwen/DeepSeek</td></tr>
+        <tr><td><span class="star">★★★★★</span></td><td>SYSTEM_PROMPT(128 行) + tool_definitions(1403 行)</td><td>cad-ai-agent</td><td>省 prompt 工程 1–2 周</td></tr>
+        <tr><td><span class="star">★★★★★</span></td><td>DXF→LLM 友好 JSON 序列化(context_builder 290 行)</td><td>cad-ai-agent</td><td>已 production 验证</td></tr>
+        <tr><td><span class="star">★★★★★</span></td><td>ezdxf 增删改查封装(748 行)</td><td>puran-water/autocad-mcp</td><td>全功能 MCP，MIT 协议</td></tr>
+        <tr><td><span class="star">★★★★★</span></td><td>OpenAI 兼容 Provider（改 base_url 接国产）</td><td>AUTOCAD-ELECTRICAL-MCP/openai_compat.py</td><td>协议无关，改 1 行接国产模型</td></tr>
+        <tr><td><span class="star">★★★★</span></td><td>P&ID 32 类设备 class_mapping</td><td>Thilo205/P-ID-Digitalization-ABB</td><td>工艺图检测 baseline</td></tr>
+        <tr><td><span class="star">★★★★</span></td><td>多 OCR 引擎回退工厂</td><td>xiaowulai-s</td><td>中文 OCR 鲁棒性</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note warn">⚠️ <b>协议红线</b>：<code>AUTOCAD-ELECTRICAL-MCP</code> 是 <b>AGPL v3</b>，商业项目<b>不能直接 import 其代码</b>；但 <code>providers/openai_compat.py</code> 是协议无关的纯客户端，改 base_url 即可跑国产 VLM。MIT/Apache 项目可放心用：cad-ai-agent、autocad-mcp、Industrial-Drawing-Recognition。</div>
+
+    <h3>11.2 电气 CAD 竞品 AI 集成现状（W2-2）—— 2026 是「AI 元年」</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">时间</th><th>事件</th><th>厂商</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">2025-11</td><td>ELECTRIX AI Copilot（业内首款 AI 嵌入式电气 CAD）</td><td>WSCAD（德）</td></tr>
+        <tr><td class="dim">2025-09</td><td>E3.series 2026 智能自动化（自动布线+智能选型）</td><td>Zuken</td></tr>
+        <tr><td class="dim">2026-05</td><td>Eplan Copilot（525K 用户）</td><td>EPLAN</td></tr>
+        <tr><td class="dim">2026-05</td><td>ETAP 2026 AI 数字孪生</td><td>ETAP</td></tr>
+        <tr><td class="dim">2026-06</td><td>FWebSCADA 2.0 AI 助手</td><td>力控（国产）</td></tr>
+        <tr><td class="dim">2026-06</td><td>AI 战略发布（西安峰会）</td><td>浩辰（国产）</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note info">🎯 <b>机会窗口</b>：第一梯队（有 AI）= WSCAD/EPLAN/SolidWorks/力控/浩辰；<b>空白（无 AI）= 博超/天正/利驰/大象/MCGS</b> —— 这些恰是建筑/电力市场主力。国际产品价格高（EPLAN 10–50 万/年）+ 数据出境风险 → 国产 AI 电气 Copilot 有 6 个月 MVP 切入窗口。</div>
+
+    <h3>11.3 工业 AI 部署真实案例（W2-3）—— 20 生产案例 + 4 失败</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">案例</th><th>行业</th><th>效果</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">南方电网「大瓦特」</td><td>电力 AI 缺陷识别</td><td>效率 ×5、准确率 +15pp</td></tr>
+        <tr><td class="dim">国家电网「光明大模型」</td><td>配电网诊断</td><td>快 4 倍</td></tr>
+        <tr><td class="dim">蔚来 × EPLAN Cloud</td><td>ECAD 设计审核</td><td>数周 → 数小时 ≈ 10×</td></tr>
+        <tr><td class="dim">Enercon × EPLAN Cloud(Azure)</td><td>风电 ECAD 上云</td><td>几天 → 20 分钟</td></tr>
+        <tr><td class="dim">中国能建「融光」</td><td>央企 EPC AI</td><td>16 家子公司共建</td></tr>
+      </tbody>
+    </table></div>
+    <h4>5 大失败教训（必读）</h4>
+    <ul class="clean dead">
+      <li><b>GE Predix</b>（2018 出售）—— 大而全、IT/工业割裂、规模空想。</li>
+      <li><b>YunOS</b> —— 过度通用、缺工业 Know-How。</li>
+      <li><b>电网大模型 demo 泡沫</b> —— 缺真实数据闭环。</li>
+      <li><b>80% AI 部署无 ROI</b> —— 缺清晰业务指标。</li>
+      <li><b>国产 ERP 早期项目</b> —— 数据质量差、变革管理弱。</li>
+    </ul>
+
+    <h3>11.4 天正 TArch/TElec 关键映射（W2-4）</h3>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">类前缀</th><th>含义</th><th>关键属性</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">TCH_WALL</td><td>墙</td><td>厚度、材质、起止点</td></tr>
+        <tr><td class="dim">TCH_Door</td><td>门</td><td>编号 M0921、宽×高、开启方向</td></tr>
+        <tr><td class="dim">TCH_Window</td><td>窗</td><td>编号 C1515、宽×高、窗台高</td></tr>
+        <tr><td class="dim">TCH_Column</td><td>柱</td><td>编号 KZ1、b×h、材质</td></tr>
+        <tr><td class="dim">TCH_Stair</td><td>楼梯</td><td>踏步宽/高、休息平台、踏步数</td></tr>
+        <tr><td class="dim">TCH_TEXT</td><td>自定义文字</td><td>私有格式 <b>未公开</b> ⚠️</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>XData 应用名</b>：<code>TArch</code>(建筑) · <code>TElec</code>(电气) · <code>TAsd</code>(结构) · <code>Twt</code>(给排水) · <code>THvac</code>(暖通)。<b>策略</b>：先读 XData 与图层，再 OCR 文字（因 TCH_TEXT 私有）。</p>
+    <pre class="code">import ezdxf
+from ezdxf.addons import odafc
+odafc.convert_file("客户.dwg", "客户.dxf", version="ACAD2018")
+doc = ezdxf.readfile("客户.dxf")
+for cls in doc.classes:                       <span class="c"># 枚举天正自定义类</span>
+    if cls.dxf.name.startswith(("TCH_", "TE_")):
+        print(f"天正类: {cls.dxf.name}")
+for e in doc.modelspace():                     <span class="c"># 读 XData 特征</span>
+    for app in ["TArch","TElec","TAsd","Twt","THvac"]:
+        if e.has_xdata(app):
+            for code, value in e.get_xdata(app): ...</pre>
+  </section>
+
+  <!-- 12 LEAD -->
+  <section id="s12">
+    <h2><span class="n">12</span>下一步研究线索（LEAD 清单）</h2>
+    <p>收敛状态：总线索 <b>47 个</b> · 已关闭 DEAD END <b>12 个</b> · 仍 OPEN：P0×4 / P1×12 / P2×15 / P3×4。Wave 2 后所有核心问题已收敛，<b>不再启动 Wave 3</b>。</p>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">优先级</th><th>LEAD</th><th>原因</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t-p0">P0</span></td><td>真实客户样图 10 套（脱敏）采集</td><td>4 周 Demo 的数据基础</td></tr>
+        <tr><td><span class="tag t-p0">P0</span></td><td>选型规则库行业专家共建（施耐德/ABB/Siemens 渠道）</td><td>商业化壁垒</td></tr>
+        <tr><td><span class="tag t-p0">P0</span></td><td>ct-cb-cable 专项补强（海拔/谐波/CT 二次负荷）</td><td>电气匹配工程化数据缺失</td></tr>
+        <tr><td><span class="tag t-p1">P1</span></td><td>ParaCAD 10M 预训练 YOLOv11-OBB 验证</td><td>解决标准 CAD 标注稀缺</td></tr>
+        <tr><td><span class="tag t-p1">P1</span></td><td>RAGAS 评估选型 RAG 端到端效果</td><td>选型质量量化</td></tr>
+        <tr><td><span class="tag t-p2">P2</span></td><td>KubeDiagrams 数据驱动出图管线源码学习</td><td>组态图渲染层优化</td></tr>
+        <tr><td><span class="tag t-p2">P2</span></td><td>WSCAD ELECTRIX AI 详细对比</td><td>知己知彼</td></tr>
+        <tr><td><span class="tag t-p2">P2</span></td><td>GB/T 4728 国标符号库多模态 RAG</td><td>私有+国标符号混合场景</td></tr>
+      </tbody>
+    </table></div>
+    <h4>DEAD END（已关闭）</h4>
+    <ul class="clean dead">
+      <li>PaddleDetection 公开电气图实测 = 0 → 从 200 张客户图 bootstrap</li>
+      <li>阶跃/混元/豆包 公开电气图实测 = 0 → 需 POC 验证</li>
+      <li>PHT-CAD/ParaCAD 仓库 404（仅论文）→ 等待官方公开</li>
+      <li>mxGraph 2020 停更 → maxGraph；ScadaBR 废弃 → Scada-LTS</li>
+      <li>dxfgrabber / pyautocad 停更 → ezdxf + ODA</li>
+      <li>GitHub 无成熟天正对象解析库 → 需自建 + T3 兜底</li>
+      <li>BOM AI 解析项目 = 0 → 商业秘密</li>
     </ul>
   </section>
 
-  <!-- 7 -->
-  <section id="next">
-    <h2><span class="n">7</span>下一步建议</h2>
+  <!-- 13 总结 -->
+  <section id="s13">
+    <h2><span class="n">13</span>一句话最终总结</h2>
+    <p class="quote">「CAD 解析一次，设备对象复用三次，选型/校验/组态图并行输出；复制 xiaowulai-s 的电气元件字典省 2–3 周，使用 cad-ai-agent 的 context_builder 模板省 1–2 周 prompt 工程，4 周内可出端到端 demo，6 个月 MVP，200–500 万达 PMF。」</p>
+  </section>
+
+  <!-- 来源 -->
+  <section id="src">
+    <h2><span class="n">📁</span>来源映射与产物</h2>
+    <h4>6 大来源报告（S1–S6）</h4>
+    <div class="tw"><table>
+      <thead><tr><th class="dim">代号</th><th>主题</th><th>来源会话</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">S1</td><td>CAD 综述</td><td>20260626-144809</td></tr>
+        <tr><td class="dim">S2</td><td>AI 视觉识别</td><td>20260629-cad-ai</td></tr>
+        <tr><td class="dim">S3</td><td>RAG 选型</td><td>20260629-equipment-selection-rag</td></tr>
+        <tr><td class="dim">S4</td><td>组态图自动绘制</td><td>scada-diagram-20260629-102602</td></tr>
+        <tr><td class="dim">S5</td><td>Excel 报告 + 点表解析</td><td>20260629-excel-research</td></tr>
+        <tr><td class="dim">S6</td><td>国产 AI 审图竞品</td><td>ai-drawing-review-20260626</td></tr>
+      </tbody>
+    </table></div>
+    <h4>11 个并行 worker</h4>
     <ul class="clean">
-      <li><span class="tag t-p0">P0</span> 采集 <b>10 套</b>真实客户脱敏图纸（4 周 Demo 的数据基础）。</li>
-      <li><span class="tag t-p0">P0</span> 行业专家共建选型规则库（Schneider / ABB / Siemens 渠道）。</li>
-      <li><span class="tag t-p1">P1</span> 海选 + 验证 <code>xiaowulai-s/Industrial-Drawing-Recognition</code> 的 DEVICE_TYPE_CN 字典。</li>
-      <li><span class="tag t-p1">P1</span> 与刘琦确认需求优先级（PoC 优先 or 生产级优先）。</li>
+      <li><b>Wave 1（6 个）</b>：W1-1 CAD 解析(24 源) · W1-2 AI 视觉(20 源) · W1-3 电气匹配(13 源+9 验证) · W1-4 选型 RAG(30+ 源) · W1-5 组态图(23 工具) · W1-6 Excel+点表(30+ 源+5 脚本)。</li>
+      <li><b>Wave 2（5 个）</b>：W2-1 GitHub 实战(18 项目) · W2-2 竞品(21 产品) · W2-3 落地案例(20 生产+4 失败) · W2-4 天正格式(TCH_ 全表) · W2-5 端到端架构(783 行综合)。</li>
     </ul>
+    <h4>原始报告路径</h4>
+    <pre class="code">综合  …\.omo\ulw-research\20260629-102413\SYNTHESIS.md  (48.6 KB · 13 节 · 1020 行)
+日志  …\.omo\ulw-research\20260629-102413\journal.md
+扩展  …\.omo\ulw-research\20260629-102413\expansion-log.md
+子报告 …\Temp\opencode\ulw-research\{20260629-093000, 20260629-cad-ai,
+        scada-diagram-20260629-102602, 20260626-144809}\</pre>
   </section>
 
-  <!-- files -->
-  <section id="files">
-    <h2><span class="n">📁</span>报告与产物路径</h2>
-    <div class="files">
-      <div class="row"><span class="lbl">综合</span><span class="pth">…\ulw-research\20260629-102413\SYNTHESIS.md（48.6 KB，13 节，1100+ 行）</span></div>
-      <div class="row"><span class="lbl">日志</span><span class="pth">…\ulw-research\20260629-102413\journal.md</span></div>
-      <div class="row"><span class="lbl">扩展</span><span class="pth">…\ulw-research\20260629-102413\expansion-log.md</span></div>
-      <div class="row"><span class="lbl">原始</span><span class="pth">11 个 worker 原始报告 · …\Temp\opencode\ulw-research\*\ 多个子目录</span></div>
-    </div>
-  </section>
-
-  <footer>
-    🤖 由 Claude Code 生成 · 调研日期 2026-06-29 · 如需进入下一阶段（PoC 实施 / 规则库设计 / 客户访谈脚本）请告知
-  </footer>
-
+  </main>
 </div>
+
+<footer>
+  🤖 由 Claude Code 基于 11 个 worker / 200+ 来源的综合报告（SYNTHESIS.md 全文）生成 · 调研日期 2026-06-29<br>
+  架构图 / 流程图 / ER 图由 Mermaid.js 渲染 · 如需进入下一阶段（PoC 实施 / 规则库设计 / 客户访谈脚本）请告知
+</footer>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    flowchart: { useMaxWidth: true, htmlLabels: true },
+    themeVariables: { fontFamily: 'Microsoft YaHei, Segoe UI, sans-serif' }
+  });
+</script>
 </body>
 </html>
