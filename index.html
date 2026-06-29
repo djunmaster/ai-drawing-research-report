@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 图纸分析三大需求 — 最终调研报告</title>
+<style>
+  :root{
+    --bg:#0f1220; --panel:#171b2e; --panel2:#1d2238; --line:#2a3050;
+    --text:#e8ebf5; --muted:#9aa3c0; --accent:#6c8cff; --accent2:#36d1b7;
+    --p0:#ff6b6b; --p1:#ffb454; --p2:#54c7ec; --ok:#36d1b7; --warn:#ffd166;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 20% -10%,#1b2142 0%,var(--bg) 55%) fixed;
+    color:var(--text); line-height:1.7; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px; margin:0 auto; padding:0 20px 80px}
+  header.hero{
+    padding:64px 24px 48px; text-align:center;
+    background:linear-gradient(135deg,#6c8cff22,#36d1b722);
+    border-bottom:1px solid var(--line);
+  }
+  .hero h1{
+    margin:0 0 14px; font-size:clamp(26px,4.5vw,42px); font-weight:800;
+    background:linear-gradient(90deg,#8fa6ff,#36d1b7); -webkit-background-clip:text;
+    background-clip:text; color:transparent; letter-spacing:.5px;
+  }
+  .hero .sub{color:var(--muted); font-size:15px}
+  .badges{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:22px}
+  .badge{
+    background:#ffffff0d; border:1px solid var(--line); color:var(--text);
+    padding:6px 14px; border-radius:999px; font-size:13px; backdrop-filter:blur(6px);
+  }
+  .badge b{color:var(--accent2)}
+  section{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px;
+    padding:28px 26px; margin-top:26px; box-shadow:0 10px 30px #0006;
+  }
+  h2{
+    margin:0 0 18px; font-size:21px; display:flex; align-items:center; gap:10px;
+    padding-bottom:12px; border-bottom:1px dashed var(--line);
+  }
+  h2 .n{
+    flex:none; width:30px; height:30px; border-radius:9px; font-size:15px;
+    display:grid; place-items:center; color:#fff;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  .lead{
+    font-size:16px; background:linear-gradient(90deg,#6c8cff14,#36d1b714);
+    border-left:4px solid var(--accent); padding:16px 18px; border-radius:10px; color:#dfe4f7;
+  }
+  table{width:100%; border-collapse:collapse; margin-top:6px; font-size:14.5px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line)}
+  thead th{color:var(--muted); font-weight:600; font-size:13px; text-transform:uppercase; letter-spacing:.5px}
+  tbody tr:hover{background:#ffffff08}
+  td.dim{color:var(--accent2); font-weight:600}
+  code{
+    background:#0c0f1c; border:1px solid var(--line); padding:2px 7px;
+    border-radius:6px; font-size:13px; color:#9fd3ff;
+  }
+  pre.diagram{
+    background:#0a0d18; border:1px solid var(--line); border-radius:12px;
+    padding:18px; overflow:auto; font-family:"Cascadia Code",Consolas,monospace;
+    font-size:12.5px; line-height:1.55; color:#bcd0ff;
+  }
+  ul.clean{list-style:none; padding:0; margin:0}
+  ul.clean li{
+    padding:12px 14px 12px 40px; position:relative; border-radius:10px;
+    border:1px solid var(--line); margin-bottom:10px; background:var(--panel2);
+  }
+  ul.clean li::before{
+    content:"▸"; position:absolute; left:16px; top:11px; color:var(--accent2); font-weight:700;
+  }
+  ul.clean li b{color:#fff}
+  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:6px; margin-right:8px; vertical-align:middle}
+  .t-p0{background:#ff6b6b22; color:var(--p0); border:1px solid #ff6b6b55}
+  .t-p1{background:#ffb45422; color:var(--p1); border:1px solid #ffb45455}
+  .t-warn{background:#ffd16622; color:var(--warn); border:1px solid #ffd16655}
+  .t-ok{background:#36d1b722; color:var(--ok); border:1px solid #36d1b755}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-top:6px}
+  .card{
+    background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:16px;
+  }
+  .card .k{color:var(--muted); font-size:13px}
+  .card .v{font-size:20px; font-weight:800; margin-top:4px; color:#fff}
+  .timeline{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-top:6px}
+  .phase{
+    position:relative; background:var(--panel2); border:1px solid var(--line);
+    border-radius:12px; padding:18px; text-align:center;
+  }
+  .phase .stage{font-size:17px; font-weight:800; color:#fff}
+  .phase .dur{color:var(--accent2); font-weight:700; margin-top:6px; font-size:14px}
+  .price{
+    margin-top:14px; padding:14px 16px; border-radius:10px;
+    background:#6c8cff10; border:1px dashed var(--accent); font-size:14.5px; color:#dfe4f7;
+  }
+  .files{font-size:13.5px}
+  .files .row{padding:8px 0; border-bottom:1px solid var(--line); display:flex; gap:10px; flex-wrap:wrap}
+  .files .row:last-child{border:none}
+  .files .lbl{color:var(--accent2); font-weight:700; flex:none; min-width:64px}
+  .files .pth{color:var(--muted); word-break:break-all}
+  footer{text-align:center; color:var(--muted); font-size:13px; margin-top:40px; padding-top:24px; border-top:1px solid var(--line)}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>🎯 AI 图纸分析三大需求 · 最终调研报告</h1>
+  <div class="sub">客户 CAD 图纸智能解析 · 设备选型 · 组态图自动生成 — 全栈技术选型与商业化路径</div>
+  <div class="badges">
+    <span class="badge">📅 <b>2026-06-29</b></span>
+    <span class="badge">⚙️ <b>11</b> 个并行 worker</span>
+    <span class="badge">📚 <b>200+</b> 来源</span>
+    <span class="badge">🧪 <b>~50</b> 个验证脚本</span>
+    <span class="badge">🌊 <b>2</b> 轮饱和波</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 1 -->
+  <section id="conclusion">
+    <h2><span class="n">1</span>核心结论（一句话）</h2>
+    <p class="lead">
+      3 大需求共享同一套 <b>CAD 解析 + 设备对象 + 规则引擎</b>，差异化只在输出层；
+      <b>Qwen2.5-VL + YOLO + BGE-M3 + AntV G6 + json-rules-engine + openpyxl</b> 全栈国产化，
+      <b>4 周 Demo + 6 月 MVP + 12 月企业版</b>，<b>200–500 万</b>达 PMF。
+    </p>
+  </section>
+
+  <!-- 2 -->
+  <section id="stack">
+    <h2><span class="n">2</span>11 个 worker 综合推荐 · 8 大核心技术选型</h2>
+    <p style="color:var(--muted);margin-top:-6px">按优先级 <span class="tag t-p0">P0</span> → <span class="tag t-p2" style="background:#54c7ec22;color:var(--p2);border:1px solid #54c7ec55">P2</span></p>
+    <table>
+      <thead><tr><th>维度</th><th>P0 推荐</th></tr></thead>
+      <tbody>
+        <tr><td class="dim">CAD 解析</td><td><code>ezdxf 1.4.4</code> + ODA File Converter</td></tr>
+        <tr><td class="dim">设备检测</td><td><code>YOLOv11-OBB</code> + <code>PP-OCRv6</code></td></tr>
+        <tr><td class="dim">关系推理</td><td><code>Qwen2.5-VL-72B</code>（国产合规）</td></tr>
+        <tr><td class="dim">选型规则</td><td><code>json-rules-engine</code> + DMN 决策表</td></tr>
+        <tr><td class="dim">RAG 检索</td><td><code>BGE-M3</code> + <code>BGE-Reranker</code> + <code>pgvector</code></td></tr>
+        <tr><td class="dim">组态图</td><td><code>AntV G6</code> + Mermaid + mingrammer/diagrams</td></tr>
+        <tr><td class="dim">Excel 输出</td><td><code>openpyxl</code> + Jinja2 + Pandera</td></tr>
+        <tr><td class="dim">数据复用</td><td>xiaowulai-s 的 <code>DEVICE_TYPE_CN</code> 字典直接拷贝</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 3 -->
+  <section id="shared">
+    <h2><span class="n">3</span>三个需求共享技术栈</h2>
+<pre class="diagram">客户 CAD ─▶ ODA Converter ─▶ ezdxf 解析 ─▶ 设备对象库 (Pydantic)
+                                                │
+                       ┌──────────────┬─────────┴─────────┐
+                       ▼              ▼                   ▼
+                 需求一: 选型清单   需求二: CT-电缆匹配    需求三: 组态图
+                 RAG + 规则引擎    规则引擎 + 数学计算     拓扑图算法
+                       │              │                   │
+                       ▼              ▼                   ▼
+                   openpyxl      Markdown + Excel     Mermaid + G6 + PNG</pre>
+    <p class="lead" style="border-color:var(--accent2);background:#36d1b714">
+      <b>DRY 核心：</b>CAD 解析一次，设备对象复用三次，节省约 <b>60%</b> 重复工作量。
+    </p>
+  </section>
+
+  <!-- 4 -->
+  <section id="findings">
+    <h2><span class="n">4</span>关键发现（Wave 2 新增）</h2>
+    <ul class="clean">
+      <li><b>直接对标项目：</b> <code>xiaowulai-s/Industrial-Drawing-Recognition</code> 含 <code>DEVICE_TYPE_CN</code> 字典（16 类电气元件 / IEC 标准），可省 2–3 周标注工作。</li>
+      <li><b>2026 是电气 CAD「AI 元年」：</b> WSCAD / EPLAN / 浩辰 / 力控 均推出 AI Copilot；国产天正 / 博超 / 利驰 <b>尚无 AI 能力</b> → 机会窗口。</li>
+      <li><b>生产案例验证：</b> 南方电网「大瓦特」效率 ×5；蔚来 × EPLAN Cloud 审核「数周 → 数小时」。</li>
+      <li><b>天正 <code>TCH_</code> 前缀已就绪：</b> TCH_WALL / TCH_Door / TCH_Window / TCH_Column 等可在 ezdxf 中识别。</li>
+      <li><span class="tag t-warn">协议红线</span> <code>AUTOCAD-ELECTRICAL-MCP</code> 是 AGPL v3 ⚠ 商业不可用；但改 <code>providers/openai_compat.py</code> 的 base_url 即可跑国产 VLM。</li>
+    </ul>
+  </section>
+
+  <!-- 5 -->
+  <section id="commercial">
+    <h2><span class="n">5</span>商业化路径</h2>
+    <div class="timeline">
+      <div class="phase"><div class="stage">Demo</div><div class="dur">4 周 · 1 月</div></div>
+      <div class="phase"><div class="stage">MVP</div><div class="dur">6 月</div></div>
+      <div class="phase"><div class="stage">企业版</div><div class="dur">12 月</div></div>
+    </div>
+    <div class="price">
+      💰 <b>定价：</b>5–30 万 / 年（SaaS） · 100 万+（私有化） · 0.5–2 元 / 图（API）
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="converge">
+    <h2><span class="n">6</span>收敛决策</h2>
+    <ul class="clean">
+      <li><span class="tag t-ok">✅</span> 47 个 EXPAND 线索已分级（<b>12</b> DEAD END 已关闭，<b>35</b> OPEN 按 P0–P3 优先级）。</li>
+      <li><span class="tag t-ok">✅</span> 不再启动 Wave 3 —— 当前材料已充分。</li>
+      <li><span class="tag t-ok">✅</span> 下一波建议：真实客户样图 <b>10 套</b>采集 + 选型规则库专家共建。</li>
+    </ul>
+  </section>
+
+  <!-- 7 -->
+  <section id="next">
+    <h2><span class="n">7</span>下一步建议</h2>
+    <ul class="clean">
+      <li><span class="tag t-p0">P0</span> 采集 <b>10 套</b>真实客户脱敏图纸（4 周 Demo 的数据基础）。</li>
+      <li><span class="tag t-p0">P0</span> 行业专家共建选型规则库（Schneider / ABB / Siemens 渠道）。</li>
+      <li><span class="tag t-p1">P1</span> 海选 + 验证 <code>xiaowulai-s/Industrial-Drawing-Recognition</code> 的 DEVICE_TYPE_CN 字典。</li>
+      <li><span class="tag t-p1">P1</span> 与刘琦确认需求优先级（PoC 优先 or 生产级优先）。</li>
+    </ul>
+  </section>
+
+  <!-- files -->
+  <section id="files">
+    <h2><span class="n">📁</span>报告与产物路径</h2>
+    <div class="files">
+      <div class="row"><span class="lbl">综合</span><span class="pth">…\ulw-research\20260629-102413\SYNTHESIS.md（48.6 KB，13 节，1100+ 行）</span></div>
+      <div class="row"><span class="lbl">日志</span><span class="pth">…\ulw-research\20260629-102413\journal.md</span></div>
+      <div class="row"><span class="lbl">扩展</span><span class="pth">…\ulw-research\20260629-102413\expansion-log.md</span></div>
+      <div class="row"><span class="lbl">原始</span><span class="pth">11 个 worker 原始报告 · …\Temp\opencode\ulw-research\*\ 多个子目录</span></div>
+    </div>
+  </section>
+
+  <footer>
+    🤖 由 Claude Code 生成 · 调研日期 2026-06-29 · 如需进入下一阶段（PoC 实施 / 规则库设计 / 客户访谈脚本）请告知
+  </footer>
+
+</div>
+</body>
+</html>
