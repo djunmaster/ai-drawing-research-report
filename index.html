@@ -3,1035 +3,362 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 辅助 CAD 电气图纸分析 — 调研报告</title>
+<title>Auto Claw · AI 驱动 CAD 图纸分析解决方案</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
 <style>
-  :root {
-    --primary: #2563eb;
-    --primary-dark: #1e40af;
-    --primary-light: #dbeafe;
-    --success: #16a34a;
-    --success-light: #dcfce7;
-    --warning: #d97706;
-    --warning-light: #fef3c7;
-    --danger: #dc2626;
-    --danger-light: #fee2e2;
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-200: #e5e7eb;
-    --gray-700: #374151;
-    --gray-800: #1f2937;
-    --gray-900: #111827;
-    --sidebar-w: 260px;
-    --code-bg: #1e293b;
-    --radius: 10px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: var(--gray-50);
-    color: var(--gray-800);
-    line-height: 1.7;
-  }
-
-  /* ── Sidebar ── */
-  #sidebar {
-    position: fixed; top: 0; left: 0;
-    width: var(--sidebar-w); height: 100vh;
-    background: var(--gray-900); color: #e2e8f0;
-    overflow-y: auto; padding: 0 0 40px;
-    z-index: 100;
-  }
-  #sidebar .logo {
-    padding: 20px 20px 16px;
-    background: linear-gradient(135deg, #1e40af, #1d4ed8);
-    font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
-    color: #fff; border-bottom: 1px solid rgba(255,255,255,.1);
-  }
-  #sidebar .logo .tag {
-    display: inline-block; margin-top: 6px;
-    font-size: 11px; font-weight: 500;
-    background: rgba(255,255,255,.15); color: #bfdbfe;
-    padding: 2px 8px; border-radius: 20px;
-  }
-  #sidebar nav { padding: 12px 0; }
-  #sidebar nav a {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 20px; color: #94a3b8;
-    text-decoration: none; font-size: 13px;
-    transition: all .15s; border-left: 3px solid transparent;
-  }
-  #sidebar nav a:hover, #sidebar nav a.active {
-    color: #fff; background: rgba(255,255,255,.06);
-    border-left-color: #3b82f6;
-  }
-  #sidebar nav .section-label {
-    padding: 16px 20px 4px; font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1px; color: #475569;
-  }
-  #sidebar nav .icon { font-size: 15px; width: 18px; text-align: center; }
-
-  /* ── Main ── */
-  #main {
-    margin-left: var(--sidebar-w);
-    padding: 0 0 80px;
-  }
-
-  /* ── Hero ── */
-  .hero {
-    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 40%, #2563eb 100%);
-    color: #fff; padding: 60px 60px 50px;
-  }
-  .hero .badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
-    border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600;
-    margin-bottom: 16px; color: #bfdbfe;
-  }
-  .hero h1 {
-    font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 12px;
-  }
-  .hero .subtitle {
-    font-size: 16px; color: #bfdbfe; max-width: 660px; margin-bottom: 28px;
-  }
-  .hero .stats {
-    display: flex; gap: 32px; flex-wrap: wrap;
-  }
-  .hero .stat { text-align: center; }
-  .hero .stat .num { font-size: 28px; font-weight: 800; color: #fff; }
-  .hero .stat .label { font-size: 12px; color: #93c5fd; margin-top: 2px; }
-
-  /* ── Content ── */
-  .content { padding: 40px 60px; max-width: 1080px; }
-
-  /* ── Section ── */
-  .section { margin-bottom: 56px; scroll-margin-top: 20px; }
-  .section-title {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 22px; font-weight: 800; color: var(--gray-900);
-    margin-bottom: 24px; padding-bottom: 12px;
-    border-bottom: 2px solid var(--gray-200);
-  }
-  .section-title .icon {
-    width: 36px; height: 36px; border-radius: 8px;
-    background: var(--primary-light); color: var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
-
-  /* ── Cards ── */
-  .card {
-    background: #fff; border: 1px solid var(--gray-200);
-    border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.06);
-  }
-  .card-title {
-    font-size: 15px; font-weight: 700; margin-bottom: 12px;
-    color: var(--gray-900);
-  }
-
-  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .cards-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-  /* ── Conclusion Banner ── */
-  .banner {
-    border-radius: var(--radius); padding: 24px 28px; margin-bottom: 24px;
-  }
-  .banner.blue {
-    background: linear-gradient(135deg, #1e40af, #2563eb);
-    color: #fff;
-  }
-  .banner.blue .banner-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
-  .banner.blue .banner-sub { font-size: 14px; color: #bfdbfe; }
-  .banner.green { background: var(--success-light); border: 1px solid #86efac; }
-  .banner.yellow { background: var(--warning-light); border: 1px solid #fcd34d; }
-
-  /* ── Flow Diagram ── */
-  .flow {
-    display: flex; align-items: center; flex-wrap: wrap;
-    gap: 0; margin: 24px 0;
-  }
-  .flow-step {
-    background: #fff; border: 2px solid var(--primary-light);
-    border-radius: 8px; padding: 12px 16px; text-align: center;
-    min-width: 110px;
-  }
-  .flow-step .step-num {
-    font-size: 11px; font-weight: 700; color: var(--primary);
-    text-transform: uppercase; margin-bottom: 4px;
-  }
-  .flow-step .step-name {
-    font-size: 13px; font-weight: 700; color: var(--gray-900);
-    margin-bottom: 2px;
-  }
-  .flow-step .step-tool {
-    font-size: 11px; color: #6b7280;
-  }
-  .flow-arrow {
-    font-size: 20px; color: var(--primary); padding: 0 8px;
-    font-weight: 300;
-  }
-
-  /* ── Table ── */
-  .table-wrap { overflow-x: auto; margin: 12px 0; }
-  table {
-    width: 100%; border-collapse: collapse;
-    font-size: 13.5px;
-  }
-  thead th {
-    background: var(--gray-800); color: #fff;
-    padding: 10px 14px; text-align: left;
-    font-weight: 600; font-size: 13px;
-  }
-  tbody tr:nth-child(even) { background: var(--gray-50); }
-  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--gray-200); }
-  tbody tr:hover { background: var(--primary-light); }
-
-  /* ── Code ── */
-  .code-block {
-    background: var(--code-bg); border-radius: 8px;
-    padding: 18px 20px; margin: 12px 0; overflow-x: auto;
-    position: relative;
-  }
-  .code-block .code-lang {
-    position: absolute; top: 10px; right: 14px;
-    font-size: 11px; color: #64748b; font-family: monospace;
-  }
-  .code-block pre {
-    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
-    font-size: 13px; line-height: 1.65; color: #e2e8f0;
-    white-space: pre; tab-size: 4;
-  }
-  .code-block .kw { color: #c084fc; }
-  .code-block .str { color: #86efac; }
-  .code-block .cm { color: #64748b; font-style: italic; }
-  .code-block .fn { color: #60a5fa; }
-  .code-block .num { color: #fb923c; }
-
-  .code-cmd {
-    background: #0f172a; border-radius: 6px;
-    padding: 12px 16px; margin: 8px 0;
-    font-family: Consolas, monospace; font-size: 13px; color: #22d3ee;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .code-cmd::before { content: "$"; color: #475569; }
-
-  /* ── Badge / Tag ── */
-  .tag {
-    display: inline-block; padding: 2px 10px;
-    border-radius: 20px; font-size: 12px; font-weight: 600;
-  }
-  .tag.green  { background: var(--success-light); color: #15803d; }
-  .tag.blue   { background: var(--primary-light); color: #1e40af; }
-  .tag.red    { background: var(--danger-light);  color: #991b1b; }
-  .tag.yellow { background: var(--warning-light); color: #92400e; }
-  .tag.gray   { background: var(--gray-100);      color: #374151; }
-
-  /* ── Alert ── */
-  .alert {
-    border-radius: 8px; padding: 14px 18px; margin: 12px 0;
-    display: flex; gap: 10px; align-items: flex-start;
-    font-size: 14px;
-  }
-  .alert.info    { background: var(--primary-light); border-left: 4px solid var(--primary); }
-  .alert.success { background: var(--success-light); border-left: 4px solid var(--success); }
-  .alert.warning { background: var(--warning-light); border-left: 4px solid var(--warning); }
-  .alert.danger  { background: var(--danger-light);  border-left: 4px solid var(--danger); }
-
-  /* ── Steps list ── */
-  .steps { counter-reset: step; }
-  .steps .step {
-    display: flex; gap: 16px; margin-bottom: 20px;
-  }
-  .steps .step-badge {
-    counter-increment: step;
-    min-width: 32px; height: 32px; border-radius: 50%;
-    background: var(--primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 2px;
-  }
-  .steps .step-badge::before { content: counter(step); }
-  .steps .step-content .step-title {
-    font-weight: 700; font-size: 15px; margin-bottom: 4px;
-  }
-  .steps .step-content .step-desc { color: #4b5563; font-size: 14px; }
-
-  /* ── Rule card ── */
-  .rule-card {
-    background: #fff; border: 1px solid var(--gray-200);
-    border-radius: 8px; padding: 16px 20px; margin-bottom: 12px;
-  }
-  .rule-card .rule-label {
-    font-weight: 700; font-size: 14px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .rule-bar {
-    height: 8px; border-radius: 4px;
-    background: var(--gray-200); margin: 8px 0;
-    position: relative; overflow: hidden;
-  }
-  .rule-bar .fill {
-    height: 100%; border-radius: 4px;
-    position: absolute;
-  }
-
-  /* ── Progress ── */
-  .progress-wrap { margin: 16px 0; }
-  .progress-item {
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 10px; font-size: 13px;
-  }
-  .progress-label { min-width: 120px; color: var(--gray-700); font-weight: 600; }
-  .progress-bar {
-    flex: 1; height: 8px; background: var(--gray-200);
-    border-radius: 4px; overflow: hidden;
-  }
-  .progress-bar .fill {
-    height: 100%; border-radius: 4px;
-    background: linear-gradient(90deg, #2563eb, #60a5fa);
-  }
-  .progress-val { min-width: 36px; text-align: right; font-weight: 700; color: var(--primary); }
-
-  /* ── Status pill ── */
-  .status {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px;
-    font-size: 12px; font-weight: 600;
-  }
-  .status::before { content: "●"; font-size: 8px; }
-  .status.ok     { background: #dcfce7; color: #15803d; }
-  .status.warn   { background: #fef3c7; color: #92400e; }
-  .status.err    { background: #fee2e2; color: #991b1b; }
-  .status.info   { background: #dbeafe; color: #1e40af; }
-
-  /* ── Env table ── */
-  .env-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
-  }
-  .env-item {
-    background: var(--gray-50); border: 1px solid var(--gray-200);
-    border-radius: 8px; padding: 12px 16px;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .env-item .env-name { font-weight: 700; font-size: 14px; }
-  .env-item .env-ver  { font-size: 13px; color: #6b7280; }
-
-  /* ── Footer ── */
-  .footer {
-    background: var(--gray-900); color: #64748b;
-    text-align: center; padding: 24px;
-    font-size: 13px; margin-left: var(--sidebar-w);
-  }
-
-  /* ── TOC highlight on scroll ── */
-  @media (max-width: 900px) {
-    #sidebar { display: none; }
-    #main, .footer { margin-left: 0; }
-    .content { padding: 24px 20px; }
-    .hero { padding: 36px 20px 28px; }
-    .hero h1 { font-size: 22px; }
-    .cards-grid, .cards-grid-3 { grid-template-columns: 1fr; }
-    .flow { flex-direction: column; }
-    .flow-arrow { transform: rotate(90deg); }
-  }
+:root{
+  --bg:#0b0f17; --bg2:#0f1521; --card:#141b2a; --card2:#1a2436;
+  --line:#243049; --txt:#e6edf6; --mut:#9fb0c8; --dim:#6b7d99;
+  --blue:#3b82f6; --cyan:#22d3ee; --green:#34d399; --amber:#fbbf24;
+  --red:#f87171; --purple:#a78bfa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:linear-gradient(180deg,#0b0f17,#0c111c 40%,#0b0f17);color:var(--txt);
+  font-family:-apple-system,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;line-height:1.7;font-size:15px}
+.wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+a{color:var(--cyan);text-decoration:none}
+/* hero */
+.hero{padding:84px 0 56px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(700px 320px at 50% -10%,rgba(59,130,246,.22),transparent);pointer-events:none}
+.tag{display:inline-block;font-size:13px;letter-spacing:2px;color:var(--cyan);
+  border:1px solid var(--line);border-radius:30px;padding:5px 16px;margin-bottom:22px;background:rgba(34,211,238,.06)}
+.hero h1{font-size:44px;font-weight:800;letter-spacing:-1px;line-height:1.15;
+  background:linear-gradient(120deg,#fff,#9fb0c8);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--mut);font-size:18px;margin-top:16px;max-width:680px;margin-left:auto;margin-right:auto}
+.meta{margin-top:18px;color:var(--dim);font-size:13px}
+/* stat badges */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:40px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 16px;text-align:center}
+.stat .n{font-size:30px;font-weight:800;color:var(--cyan)}
+.stat .l{font-size:12.5px;color:var(--mut);margin-top:4px}
+/* sections */
+section{padding:44px 0;border-top:1px solid rgba(36,48,73,.5)}
+.eyebrow{color:var(--blue);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+h2{font-size:28px;font-weight:800;margin:8px 0 10px;letter-spacing:-.5px}
+.lead{color:var(--mut);font-size:16px;margin-bottom:24px;max-width:760px}
+h3{font-size:18px;margin:22px 0 10px;color:#fff}
+p{color:var(--txt)}
+.muted{color:var(--mut)}
+/* cards grid */
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card h4{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card p{color:var(--mut);font-size:14px}
+.ico{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+.b-blue{background:rgba(59,130,246,.15);color:var(--blue)}
+.b-green{background:rgba(52,211,153,.15);color:var(--green)}
+.b-amber{background:rgba(251,191,36,.15);color:var(--amber)}
+.b-red{background:rgba(248,113,113,.15);color:var(--red)}
+.b-cyan{background:rgba(34,211,238,.15);color:var(--cyan)}
+.b-purple{background:rgba(167,139,250,.15);color:var(--purple)}
+/* pills / chips */
+.chip{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--line);margin:3px 4px 0 0;color:var(--mut)}
+/* mermaid */
+.diagram{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;overflow:auto}
+.mermaid{display:flex;justify-content:center}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+th,td{padding:11px 13px;text-align:left;border-bottom:1px solid rgba(36,48,73,.6)}
+th{background:var(--card2);color:var(--mut);font-weight:600;font-size:12.5px;letter-spacing:.5px}
+td{color:var(--txt)}
+tr:last-child td{border-bottom:none}
+.ok{color:var(--green);font-weight:700}
+.warn{color:var(--amber);font-weight:700}
+.no{color:var(--red);font-weight:700}
+.mono{font-family:"SF Mono",Consolas,monospace;font-size:13px;color:var(--cyan)}
+/* certainty tiers */
+.tier{border-left:4px solid;border-radius:0 12px 12px 0;padding:16px 18px;margin-bottom:12px;background:var(--card)}
+.tier.t1{border-color:var(--green)} .tier.t2{border-color:var(--cyan)}
+.tier.t3{border-color:var(--amber)} .tier.t4{border-color:var(--red)}
+.tier h4{font-size:15px;margin-bottom:5px}
+.tier p{font-size:13.5px;color:var(--mut)}
+/* timeline */
+.tl{position:relative;padding-left:28px}
+.tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding:0 0 22px 8px}
+.tl-item::before{content:"";position:absolute;left:-25px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(59,130,246,.15)}
+.tl-item h4{font-size:15px;margin-bottom:3px}
+.tl-item p{font-size:13.5px;color:var(--mut)}
+/* image */
+.shot{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;margin-top:8px}
+.shot img{width:100%;display:block}
+.cap{font-size:12.5px;color:var(--dim);margin-top:8px;text-align:center}
+/* callout */
+.note{background:linear-gradient(90deg,rgba(59,130,246,.08),transparent);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:0 12px 12px 0;padding:16px 18px;margin:16px 0;font-size:14px}
+.note.green{border-left-color:var(--green);background:linear-gradient(90deg,rgba(52,211,153,.08),transparent)}
+.note.amber{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(251,191,36,.08),transparent)}
+.chartbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;height:300px;position:relative}
+footer{padding:48px 0 60px;text-align:center;color:var(--dim);font-size:13px;border-top:1px solid var(--line)}
+.kbd{font-family:Consolas,monospace;background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-size:12.5px;color:var(--cyan)}
+@media(max-width:780px){.g2,.g3,.stats{grid-template-columns:1fr}.hero h1{font-size:32px}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════ Sidebar ══════════════ -->
-<aside id="sidebar">
-  <div class="logo">
-    <div>🔬 AI CAD 图纸分析</div>
-    <div>调研报告</div>
-    <div class="tag">Ultraresearch · 2026-06-29</div>
+<div class="hero">
+  <div class="wrap">
+    <span class="tag">AUTO CLAW · 工程验证版</span>
+    <h1>AI 驱动 CAD 电气图纸<br>自动分析解决方案</h1>
+    <p>从 DWG 图纸自动生成设备配置清单 / 校验互感器·电缆匹配 —— 一套以<b>规则与坐标提取为主、LLM 视觉为校验兜底</b>的工程化方案，全部结论经真实示例图纸代码验证。</p>
+    <div class="meta">更新于 2026-06-30 · 基于真实项目「宁夏 D03」「301-单路进线18路出线」示例验证</div>
   </div>
-  <nav>
-    <div class="section-label">概览</div>
-    <a href="#summary"><span class="icon">🎯</span> 核心结论</a>
-    <a href="#arch"><span class="icon">🏗️</span> 整体架构</a>
-    <a href="#env"><span class="icon">⚙️</span> 环境与工具</a>
-
-    <div class="section-label">两大需求</div>
-    <a href="#req1"><span class="icon">📋</span> 需求一：配置清单</a>
-    <a href="#req2"><span class="icon">🔍</span> 需求二：CT匹配分析</a>
-
-    <div class="section-label">技术细节</div>
-    <a href="#dxf"><span class="icon">📐</span> DWG→DXF转换</a>
-    <a href="#extract"><span class="icon">📝</span> 文字提取</a>
-    <a href="#ai"><span class="icon">🤖</span> AI结构化提取</a>
-    <a href="#rules"><span class="icon">📏</span> 电气规则库</a>
-
-    <div class="section-label">实施</div>
-    <a href="#quickstart"><span class="icon">⚡</span> 快速启动</a>
-    <a href="#risks"><span class="icon">⚠️</span> 风险与注意事项</a>
-  </nav>
-</aside>
-
-<!-- ══════════════ Main ══════════════ -->
-<div id="main">
-
-  <!-- Hero -->
-  <div class="hero">
-    <div class="badge">🔬 Ultraresearch · 6工作者并行 · 2波次扩展</div>
-    <h1>AI 辅助 CAD 电气图纸分析<br>深度调研报告</h1>
-    <p class="subtitle">
-      研究如何利用 AI 自动解析 DWG/DXF 配电柜系统图，输出设备配置清单（需求一）与互感器匹配分析报告（需求二）。
-    </p>
-    <div class="stats">
-      <div class="stat"><div class="num">6</div><div class="label">并行调研工作者</div></div>
-      <div class="stat"><div class="num">40+</div><div class="label">信息来源</div></div>
-      <div class="stat"><div class="num">2</div><div class="label">扩展波次</div></div>
-      <div class="stat"><div class="num">3</div><div class="label">实证代码验证</div></div>
-      <div class="stat"><div class="num">1-2周</div><div class="label">MVP交付预估</div></div>
-    </div>
-  </div>
-
-  <div class="content">
-
-    <!-- ═══ 核心结论 ═══ -->
-    <div class="section" id="summary">
-      <div class="section-title">
-        <div class="icon">🎯</div>
-        核心结论
-      </div>
-
-      <div class="banner blue">
-        <div class="banner-title">两个需求都可以用AI很好地解决，推荐统一架构</div>
-        <div class="banner-sub">这不是"能不能做"的问题，是"多久能做"的问题。MVP 可在 1-2 周内完成。</div>
-      </div>
-
-      <div class="cards-grid-3">
-        <div class="card">
-          <div class="card-title">🔑 最关键一步</div>
-          <p style="font-size:14px;color:#4b5563;margin-bottom:12px;">安装 ODA File Converter（DWG→DXF转换工具）是所有后续步骤的前置，免费无需注册。</p>
-          <div class="code-cmd">winget install -e --id ODA.ODAFileConverter</div>
-        </div>
-        <div class="card">
-          <div class="card-title">📊 示例文件验证</div>
-          <p style="font-size:14px;color:#4b5563">实际读取了宁夏D03配置清单.xlsx，确认BOM格式；从DWG二进制提取<strong>201条中文字符串</strong>，包含"列头柜"4次、"进线"28次、"出线"38次。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">🤖 AI方案选择</div>
-          <p style="font-size:14px;color:#4b5563"><strong>DXF文字提取 + Claude结构化</strong>是最优路线。DXF是矢量格式，文字天然精确，远超图像OCR，且成本低10倍以上。</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 整体架构 ═══ -->
-    <div class="section" id="arch">
-      <div class="section-title">
-        <div class="icon">🏗️</div>
-        整体技术架构（两个需求共用）
-      </div>
-
-      <div class="flow">
-        <div class="flow-step">
-          <div class="step-num">Step 1</div>
-          <div class="step-name">DWG→DXF</div>
-          <div class="step-tool">ODA + ezdxf.odafc</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-num">Step 2</div>
-          <div class="step-name">文字提取</div>
-          <div class="step-tool">ezdxf 全量解析</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-num">Step 3</div>
-          <div class="step-name">AI结构化</div>
-          <div class="step-tool">Claude + instructor</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-num">Step 4</div>
-          <div class="step-name">规则匹配/校验</div>
-          <div class="step-tool">需求1:选型 / 需求2:匹配</div>
-        </div>
-        <div class="flow-arrow">→</div>
-        <div class="flow-step">
-          <div class="step-num">Step 5</div>
-          <div class="step-name">Excel输出</div>
-          <div class="step-tool">openpyxl</div>
-        </div>
-      </div>
-
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-title">需求一差异点</div>
-          <ul style="font-size:14px;color:#374151;padding-left:18px;line-height:2">
-            <li>Step 3 提取目标：<strong>列头柜 + 进/出线回路电流</strong></li>
-            <li>Step 4 逻辑：用回路电流查<strong>选型规则Excel</strong>得到设备型号</li>
-            <li>输出：BOM设备配置清单（产品名称/型号/数量）</li>
-          </ul>
-        </div>
-        <div class="card">
-          <div class="card-title">需求二差异点</div>
-          <ul style="font-size:14px;color:#374151;padding-left:18px;line-height:2">
-            <li>Step 3 提取目标：<strong>CT互感器 + 断路器 + 电缆规格</strong></li>
-            <li>Step 4 逻辑：<strong>三者匹配合理性校验</strong>（规则引擎）</li>
-            <li>输出：异常分析报告（含严重度分级）</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 环境 ═══ -->
-    <div class="section" id="env">
-      <div class="section-title">
-        <div class="icon">⚙️</div>
-        当前环境状态（已实证验证）
-      </div>
-
-      <div class="env-grid">
-        <div class="env-item">
-          <div>
-            <div class="env-name">ezdxf</div>
-            <div class="env-ver">E:\dev_softwares\python3.10\</div>
-          </div>
-          <span class="status ok">v1.4.4 已就绪</span>
-        </div>
-        <div class="env-item">
-          <div>
-            <div class="env-name">anthropic SDK</div>
-            <div class="env-ver">Claude API 客户端</div>
-          </div>
-          <span class="status ok">v0.76.0 已就绪</span>
-        </div>
-        <div class="env-item">
-          <div>
-            <div class="env-name">openpyxl</div>
-            <div class="env-ver">Excel 读写</div>
-          </div>
-          <span class="status ok">v3.1.5 已就绪</span>
-        </div>
-        <div class="env-item">
-          <div>
-            <div class="env-name">ODA File Converter</div>
-            <div class="env-ver">DWG→DXF 转换工具</div>
-          </div>
-          <span class="status warn">⚠️ 未安装，需执行 winget</span>
-        </div>
-        <div class="env-item">
-          <div>
-            <div class="env-name">instructor</div>
-            <div class="env-ver">Pydantic 结构化输出</div>
-          </div>
-          <span class="status info">需安装</span>
-        </div>
-        <div class="env-item">
-          <div>
-            <div class="env-name">pandas</div>
-            <div class="env-ver">数据处理</div>
-          </div>
-          <span class="status info">需安装</span>
-        </div>
-      </div>
-
-      <div class="alert warning" style="margin-top:16px">
-        <span>⚠️</span>
-        <div><strong>唯一缺失的关键工具：</strong>ODA File Converter。执行 <code style="background:#fef3c7;padding:1px 5px;border-radius:3px">winget install -e --id ODA.ODAFileConverter</code> 后即可启动开发。</div>
-      </div>
-    </div>
-
-    <!-- ═══ 需求一 ═══ -->
-    <div class="section" id="req1">
-      <div class="section-title">
-        <div class="icon">📋</div>
-        需求一：列头柜配置清单自动生成（Auto Claw）
-      </div>
-
-      <div class="card">
-        <div class="card-title">示例输入→输出（基于宁夏D03实际数据）</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:8px">
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">输入</div>
-            <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:12px;font-size:13px;line-height:1.9">
-              <div>📄 <strong>301-单路进线18路出线.dwg</strong></div>
-              <div>📊 选型规则.xlsx</div>
-              <div style="margin-top:8px;color:#6b7280">DXF版本: R2018 (AC1032)</div>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:8px">输出 BOM 示例</div>
-            <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:6px;padding:12px;font-size:13px;line-height:1.9">
-              <div>1000A进线霍尔传感器 · LDCT-1000X1 · <span class="tag blue">×1</span></div>
-              <div>精密列头柜监控软件 · PMAC201V7 · <span class="tag blue">×1</span></div>
-              <div>出线霍尔传感器 · LDCT-400X1 · <span class="tag blue">×2</span></div>
-              <div>出线霍尔传感器 · LDCT-200K2 · <span class="tag blue">×4</span></div>
-              <div>出线霍尔传感器 · LDCT-100K1 · <span class="tag blue">×8</span></div>
-              <div style="color:#6b7280">... 共18路出线完整配置</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-badge"></div>
-          <div class="step-content">
-            <div class="step-title">DWG → DXF 转换</div>
-            <div class="step-desc">用 <code>odafc.readfile("图纸.dwg")</code> 一行代码完成，内部自动调用已安装的 ODA Converter。支持 R2004～R2018 全版本。</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-badge"></div>
-          <div class="step-content">
-            <div class="step-title">ezdxf 全量提取文字</div>
-            <div class="step-desc">遍历 TEXT / MTEXT 实体 + INSERT 块的 ATTRIB 属性 + 递归展开嵌套块。按图层分组，构建上下文字符串。</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-badge"></div>
-          <div class="step-content">
-            <div class="step-title">Claude 识别列头柜结构</div>
-            <div class="step-desc">将全量文字上下文传给 Claude，指定 Pydantic 数据模型（柜体ID、进线回路、出线回路），用 instructor 强制结构化输出，自动重试3次。</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-badge"></div>
-          <div class="step-content">
-            <div class="step-title">选型规则匹配</div>
-            <div class="step-desc">用识别到的进线电流（如1000A）和出线电流（如400A/200A/100A）查选型规则Excel，得到对应设备型号（LDCT-xxx系列）和数量。</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-badge"></div>
-          <div class="step-content">
-            <div class="step-title">Excel BOM 输出</div>
-            <div class="step-desc">用 openpyxl 生成格式化Excel，含产品名称/型号/数量/单位/所属柜体，兼容现有BOM模板格式。</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 需求二 ═══ -->
-    <div class="section" id="req2">
-      <div class="section-title">
-        <div class="icon">🔍</div>
-        需求二：CT互感器与电缆规格匹配合理性分析
-      </div>
-
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-title">输出报告结构（5个Sheet）</div>
-          <table style="font-size:13px">
-            <thead><tr><th>Sheet</th><th>内容</th></tr></thead>
-            <tbody>
-              <tr><td>Sheet 1</td><td>CT-断路器匹配表（逐回路，红/黄标色）</td></tr>
-              <tr><td>Sheet 2</td><td>电缆规格汇总</td></tr>
-              <tr><td>Sheet 3</td><td>CT-电缆综合匹配分析</td></tr>
-              <tr><td>Sheet 4</td><td><strong>异常清单</strong>（原因+建议）</td></tr>
-              <tr><td>Sheet 5</td><td>综合评估结论</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="card">
-          <div class="card-title">可识别的4类异常</div>
-          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
-            <div><span class="tag red">严重</span> <strong>互感器规格偏小</strong> — CT饱和，计量失效</div>
-            <div><span class="tag yellow">警告</span> <strong>电缆规格过粗</strong> — 成本浪费，设计问题</div>
-            <div><span class="tag red">严重</span> <strong>电缆规格过细</strong> — 载流量不足，火灾风险</div>
-            <div><span class="tag yellow">警告</span> <strong>CT-断路器不配合</strong> — 档位错配</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ DWG→DXF ═══ -->
-    <div class="section" id="dxf">
-      <div class="section-title">
-        <div class="icon">📐</div>
-        DWG → DXF 转换（关键前置步骤）
-      </div>
-
-      <div class="alert info">
-        <span>ℹ️</span>
-        <div><strong>为什么必须转换？</strong> ezdxf 只能读取 DXF（文本/结构格式），DWG 是 Autodesk 私有二进制格式，需要 ODA Converter 作为中间层。</div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>方案</th><th>推荐度</th><th>费用</th><th>安装方式</th><th>支持版本</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>ODA File Converter</strong></td>
-              <td><span class="tag green">★★★★★ 首选</span></td>
-              <td>免费</td>
-              <td><code>winget install ODA.ODAFileConverter</code></td>
-              <td>R2.5 ～ R2018</td>
-            </tr>
-            <tr>
-              <td>LibreDWG</td>
-              <td><span class="tag blue">★★★ 备选</span></td>
-              <td>免费 (GPLv3)</td>
-              <td>Linux 包管理器 / 手动编译</td>
-              <td>R2.5 ～ R2018（部分）</td>
-            </tr>
-            <tr>
-              <td>Aspose.CAD for Python</td>
-              <td><span class="tag yellow">★★★ 商业</span></td>
-              <td>付费（有试用）</td>
-              <td><code>pip install aspose-cad</code></td>
-              <td>R2004 ～ R2018</td>
-            </tr>
-            <tr>
-              <td>AutoCAD accoreconsole</td>
-              <td><span class="tag gray">★★★★ 需License</span></td>
-              <td>需 AutoCAD 授权</td>
-              <td>已有 AutoCAD 时直接用</td>
-              <td>原生，效果最佳</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="code-block">
-        <div class="code-lang">python</div>
-        <pre><span class="kw">from</span> ezdxf.addons <span class="kw">import</span> odafc
-<span class="kw">import</span> ezdxf
-
-<span class="cm"># 直接读取 DWG，返回 ezdxf Document 对象（内部自动转换）</span>
-doc = odafc.<span class="fn">readfile</span>(<span class="str">"图纸.dwg"</span>)
-print(<span class="str">f"DXF版本: {doc.dxfversion}"</span>)  <span class="cm"># 示例1=R2018, 示例2=R2004</span>
-
-<span class="cm"># 或：批量转换整个文件夹</span>
-odafc.<span class="fn">convert</span>(<span class="str">"图纸.dwg"</span>, <span class="str">"图纸.dxf"</span>, version=<span class="str">"R2018"</span>, audit=<span class="kw">True</span>)</pre>
-      </div>
-
-      <div class="alert success">
-        <span>✅</span>
-        <div><strong>ezdxf v1.4.4 已内置 odafc 插件</strong>，安装好 ODA Converter 后无需额外代码配置，直接调用。<br>老图纸（R2004/GBK编码）需加参数：<code>ezdxf.readfile("x.dxf", encoding="cp936")</code></div>
-      </div>
-    </div>
-
-    <!-- ═══ 文字提取 ═══ -->
-    <div class="section" id="extract">
-      <div class="section-title">
-        <div class="icon">📝</div>
-        ezdxf 文字提取核心代码
-      </div>
-
-      <div class="alert warning">
-        <span>⚠️</span>
-        <div><strong>重要：</strong>设备标注可能存在于3种不同位置，必须全部提取，遗漏任何一种都会导致信息不完整。</div>
-      </div>
-
-      <div class="cards-grid-3" style="margin-bottom:16px">
-        <div class="card">
-          <div class="card-title">📌 TEXT / MTEXT 实体</div>
-          <p style="font-size:13px;color:#4b5563">图纸中的文字标注，直接附着在图上。<strong>MTEXT 用 <code>.plain_text()</code></strong>，会自动去除格式代码。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">🧩 INSERT.attribs 属性</div>
-          <p style="font-size:13px;color:#4b5563">设备图块（断路器/CT符号）上的属性标注。很多设备参数存在这里，<strong>必须遍历 INSERT 实体</strong>。</p>
-        </div>
-        <div class="card">
-          <div class="card-title">📦 嵌套块（递归展开）</div>
-          <p style="font-size:13px;color:#4b5563">块内嵌套块的文字。用 <code>disassemble.recursive_decompose</code> 展开，确保不遗漏。</p>
-        </div>
-      </div>
-
-      <div class="code-block">
-        <div class="code-lang">python</div>
-        <pre><span class="kw">from</span> ezdxf <span class="kw">import</span> disassemble, query <span class="kw">as</span> dxf_query
-<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
-
-<span class="kw">def</span> <span class="fn">extract_all_texts</span>(doc):
-    msp = doc.modelspace()
-    layer_texts = <span class="fn">defaultdict</span>(list)
-
-    <span class="cm"># 1. 直接文字实体</span>
-    <span class="kw">for</span> entity <span class="kw">in</span> msp.<span class="fn">query</span>(<span class="str">"TEXT MTEXT"</span>):
-        txt = (entity.<span class="fn">plain_text</span>() <span class="kw">if</span> entity.<span class="fn">dxftype</span>() == <span class="str">"MTEXT"</span>
-               <span class="kw">else</span> entity.dxf.text)
-        <span class="kw">if</span> txt <span class="kw">and</span> txt.<span class="fn">strip</span>():
-            layer_texts[entity.dxf.layer].<span class="fn">append</span>(txt.<span class="fn">strip</span>())
-
-    <span class="cm"># 2. 图块属性（关键！设备参数在这里）</span>
-    <span class="kw">for</span> insert <span class="kw">in</span> msp.<span class="fn">query</span>(<span class="str">"INSERT"</span>):
-        <span class="kw">for</span> attrib <span class="kw">in</span> insert.attribs:
-            val = attrib.dxf.text
-            <span class="kw">if</span> val <span class="kw">and</span> val.<span class="fn">strip</span>():
-                layer_texts[insert.dxf.layer].<span class="fn">append</span>(
-                    <span class="str">f"{attrib.dxf.tag}={val.strip()}"</span>)
-
-    <span class="cm"># 3. 递归展开嵌套块</span>
-    all_nested = dxf_query.<span class="fn">EntityQuery</span>(
-        disassemble.<span class="fn">recursive_decompose</span>(msp))
-    <span class="kw">for</span> e <span class="kw">in</span> all_nested.<span class="fn">query</span>(<span class="str">"TEXT MTEXT"</span>):
-        txt = e.<span class="fn">plain_text</span>() <span class="kw">if</span> e.<span class="fn">dxftype</span>() == <span class="str">"MTEXT"</span> <span class="kw">else</span> e.dxf.text
-        <span class="kw">if</span> txt <span class="kw">and</span> txt.<span class="fn">strip</span>():
-            layer_texts[<span class="str">f"nested:{e.dxf.layer}"</span>].<span class="fn">append</span>(txt.<span class="fn">strip</span>())
-
-    <span class="kw">return</span> layer_texts</pre>
-      </div>
-    </div>
-
-    <!-- ═══ AI ═══ -->
-    <div class="section" id="ai">
-      <div class="section-title">
-        <div class="icon">🤖</div>
-        AI 结构化提取（Claude + instructor）
-      </div>
-
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-title">为什么选 instructor？</div>
-          <ul style="font-size:14px;color:#374151;padding-left:18px;line-height:2">
-            <li>LLM 偶尔输出格式不对 → <strong>自动重试</strong>（max_retries=3）</li>
-            <li>Pydantic 字段定义即文档，<strong>自动校验数据类型</strong></li>
-            <li>与 Anthropic SDK 无缝集成，一行代码切换</li>
-            <li>支持提示缓存（大图纸成本可降低 90%）</li>
-          </ul>
-        </div>
-        <div class="card">
-          <div class="card-title">安装命令</div>
-          <div class="code-cmd" style="margin-bottom:8px">pip install "instructor[anthropic]"</div>
-          <p style="font-size:13px;color:#6b7280;margin-top:8px">已有 anthropic SDK v0.76.0，装 instructor 后即可使用。无需额外配置。</p>
-        </div>
-      </div>
-
-      <div class="code-block">
-        <div class="code-lang">python</div>
-        <pre><span class="kw">import</span> anthropic, instructor
-<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
-<span class="kw">from</span> typing <span class="kw">import</span> List, Optional
-
-<span class="cm"># 数据模型定义（需求一：列头柜）</span>
-<span class="kw">class</span> <span class="fn">OutgoingCircuit</span>(BaseModel):
-    circuit_label:    str            = Field(description=<span class="str">"出线回路标签"</span>)
-    breaker_rating_A: Optional[int]  = Field(<span class="kw">None</span>, description=<span class="str">"断路器额定电流(A)"</span>)
-    ct_model:         Optional[str]  = Field(<span class="kw">None</span>, description=<span class="str">"CT型号,如LDCT-400X1"</span>)
-    cable_spec:       Optional[str]  = Field(<span class="kw">None</span>, description=<span class="str">"电缆规格"</span>)
-
-<span class="kw">class</span> <span class="fn">ColumnHeadCabinet</span>(BaseModel):
-    cabinet_id:        str                    = Field(description=<span class="str">"柜体编号"</span>)
-    incoming_circuits: List[OutgoingCircuit]  = Field(default_factory=list)
-    outgoing_circuits: List[OutgoingCircuit]  = Field(default_factory=list)
-
-<span class="kw">class</span> <span class="fn">ExtractionResult</span>(BaseModel):
-    column_head_cabinets: List[ColumnHeadCabinet]
-
-<span class="cm"># 初始化客户端</span>
-client = instructor.<span class="fn">from_anthropic</span>(
-    create=anthropic.<span class="fn">Anthropic</span>(),
-    mode=instructor.Mode.TOOLS
-)
-
-<span class="cm"># 结构化提取（自动Pydantic校验+重试）</span>
-result: ExtractionResult = client.<span class="fn">create</span>(
-    model=<span class="str">"claude-sonnet-4-6"</span>,
-    max_tokens=<span class="num">4096</span>,
-    system=<span class="str">"你是数据中心电气工程专家，从配电系统图DXF文字中提取列头柜配置信息。"</span>,
-    messages=[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: context_text}],
-    response_model=ExtractionResult,
-    max_retries=<span class="num">3</span>   <span class="cm"># 格式错误自动重试</span>
-)</pre>
-      </div>
-    </div>
-
-    <!-- ═══ 规则库 ═══ -->
-    <div class="section" id="rules">
-      <div class="section-title">
-        <div class="icon">📏</div>
-        电气规则库（需求二核心）
-      </div>
-
-      <div class="card">
-        <div class="card-title">CT-断路器匹配合理性判断（GB/T 1208-2006 · 70%原则）</div>
-        <div style="margin:12px 0;font-size:14px;color:#4b5563">
-          核心公式：<strong>CT一次额定电流 = 线路最大电流 ÷ 0.7</strong>，向上取GB标准值
-        </div>
-
-        <div class="progress-wrap">
-          <div style="font-size:12px;color:#6b7280;margin-bottom:8px">断路器额定电流 / CT一次额定电流 的比值判断区间：</div>
-
-          <div style="position:relative;height:32px;background:linear-gradient(90deg, #fee2e2 0%, #fef3c7 20%, #dcfce7 40%, #dcfce7 70%, #fef3c7 85%, #fee2e2 100%);border-radius:6px;margin:8px 0">
-            <div style="position:absolute;top:50%;left:20%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#991b1b">CT偏大</div>
-            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#15803d">✓ 合理区间</div>
-            <div style="position:absolute;top:50%;left:80%;transform:translate(-50%,-50%);font-size:11px;font-weight:700;color:#991b1b">CT偏小</div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-top:4px">
-            <span>0%</span><span>30%</span><span>60%</span><span>120%</span><span>150%</span><span>200%+</span>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-          <div class="alert success" style="flex:1;margin:0"><span>✅</span><div><strong>60%～120%</strong> 正常合理范围</div></div>
-          <div class="alert warning" style="flex:1;margin:0"><span>⚠️</span><div><strong>120%～150%</strong> CT轻度偏小，警告</div></div>
-          <div class="alert danger"  style="flex:1;margin:0"><span>🚨</span><div><strong>&gt;150%</strong> CT严重偏小，铁芯饱和</div></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">常用CT变比选型对照表</div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>断路器额定（A）</th><th>推荐CT变比</th><th>工作比例</th><th>典型应用</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>100A</td><td>100/5</td><td>100%（上限）</td><td>小容量出线</td></tr>
-              <tr><td>160A</td><td><strong>200/5</strong></td><td>80%（最佳）</td><td>中小容量出线</td></tr>
-              <tr><td>250A</td><td><strong>300/5</strong></td><td>83%（良好）</td><td>中等容量出线</td></tr>
-              <tr><td>400A</td><td><strong>500/5</strong></td><td>80%（最佳）</td><td>较大容量进线</td></tr>
-              <tr><td>630A</td><td>600/5 或 800/5</td><td>78%～105%</td><td>大容量进线</td></tr>
-              <tr><td>1000A</td><td><strong>1000/5</strong></td><td>100%（上限）</td><td>主配电进线</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">电缆-断路器匹配规则（GB 50054-2011）</div>
-        <div class="cards-grid">
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:8px">🚨 电缆过细（危险）</div>
-            <div style="font-size:13px;background:#fee2e2;padding:10px;border-radius:6px">
-              电缆载流量 IZ &lt; 断路器额定电流 In<br>
-              <span style="color:#6b7280">→ 过载保护失效，电缆过热，火灾风险</span>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#d97706;margin-bottom:8px">⚠️ 电缆过粗（浪费）</div>
-            <div style="font-size:13px;background:#fef3c7;padding:10px;border-radius:6px">
-              电缆载流量 IZ &gt; 断路器额定电流 × 3<br>
-              <span style="color:#6b7280">→ 无安全风险，但成本浪费，设计失误</span>
-            </div>
-          </div>
-        </div>
-        <div style="margin-top:12px;font-size:13px">
-          <strong>铜芯电缆载流量速查（穿管，25°C）：</strong>
-          <code style="background:var(--gray-100);padding:2px 6px;border-radius:3px;margin-left:8px">
-            16mm²→64A · 35mm²→104A · 50mm²→128A · 95mm²→192A · 185mm²→296A · 240mm²→352A
-          </code>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 快速启动 ═══ -->
-    <div class="section" id="quickstart">
-      <div class="section-title">
-        <div class="icon">⚡</div>
-        快速启动（第一天行动清单）
-      </div>
-
-      <div class="card">
-        <div class="card-title">第一步：安装唯一缺失的工具</div>
-        <div class="code-cmd">winget install -e --id ODA.ODAFileConverter</div>
-        <div class="code-cmd">pip install "instructor[anthropic]" pandas</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">第二步：验证DWG转换+文字提取（关键探索！）</div>
-        <div class="code-block">
-          <div class="code-lang">python</div>
-          <pre><span class="kw">from</span> ezdxf.addons <span class="kw">import</span> odafc
-<span class="kw">import</span> io, sys
-sys.stdout = io.<span class="fn">TextIOWrapper</span>(sys.stdout.buffer, encoding=<span class="str">'utf-8'</span>, errors=<span class="str">'replace'</span>)
-
-doc = odafc.<span class="fn">readfile</span>(<span class="str">r"F:\AI资料\Codex -CADturnData\CAD资料\示例\示例1\301-单路进线18路出线.dwg"</span>)
-
-<span class="cm"># 探索图层结构（必做！不同设计院图层名不同）</span>
-print(<span class="str">"图层列表:"</span>, [l.dxf.name <span class="kw">for</span> l <span class="kw">in</span> doc.layers])
-
-<span class="cm"># 探索块定义（设备符号库）</span>
-print(<span class="str">"块定义:"</span>, list(doc.blocks.entity_space)[:20])
-
-<span class="cm"># 提取所有文字，看看里面有什么</span>
-msp = doc.modelspace()
-<span class="kw">for</span> t <span class="kw">in</span> list(msp.<span class="fn">query</span>(<span class="str">"TEXT MTEXT"</span>))[:30]:
-    txt = t.<span class="fn">plain_text</span>() <span class="kw">if</span> t.<span class="fn">dxftype</span>() == <span class="str">"MTEXT"</span> <span class="kw">else</span> t.dxf.text
-    print(<span class="str">f"  [{t.dxf.layer}] {txt[:80]}"</span>)</pre>
-        </div>
-        <div class="alert info" style="margin-top:8px">
-          <span>💡</span>
-          <div>这一步的输出结果决定后续所有工作。图层名称和块名称是设计定制Prompt的依据，无法事先确定。</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">实施时间线</div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>阶段</th><th>工作内容</th><th>时长</th></tr></thead>
-            <tbody>
-              <tr><td><span class="tag blue">阶段一</span></td><td>环境搭建 + ODA安装 + DWG提取验证</td><td>1天</td></tr>
-              <tr><td><span class="tag green">阶段二</span></td><td>需求一MVP：提取→AI识别→选型匹配→Excel输出</td><td>3-5天</td></tr>
-              <tr><td><span class="tag green">阶段三</span></td><td>需求二：CT/电缆分析 + 规则校验 + 报告输出</td><td>3-5天</td></tr>
-              <tr><td><span class="tag yellow">阶段四</span></td><td>Web界面 + 批量处理 + 错误处理 + 测试验收</td><td>1-2周</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ 风险 ═══ -->
-    <div class="section" id="risks">
-      <div class="section-title">
-        <div class="icon">⚠️</div>
-        风险与注意事项
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div class="alert danger">
-          <span>🚨</span>
-          <div><strong>图层名不统一（最大风险）</strong><br>不同设计院的图层命名完全不同，无法写死代码。解决方案：全量提取所有文字，不依赖图层过滤；先探索再编码。</div>
-        </div>
-        <div class="alert warning">
-          <span>⚠️</span>
-          <div><strong>SHX中文字体乱码</strong><br>老图纸（R2004及以前，GBK编码）可能出现乱码。解决：<code>ezdxf.readfile("x.dxf", encoding="cp936")</code></div>
-        </div>
-        <div class="alert warning">
-          <span>⚠️</span>
-          <div><strong>设备参数在ATTRIB里，不在TEXT里</strong><br>断路器/CT符号的型号参数通常存在图块属性ATTRIB中，必须遍历 INSERT.attribs，仅查 TEXT 实体会漏掉大量信息。</div>
-        </div>
-        <div class="alert info">
-          <span>ℹ️</span>
-          <div><strong>选型规则文件格式需确认</strong><br>需求一的规则匹配依赖选型规则Excel的格式（列名、电流档位定义等）。需要与刘琦确认标准格式后才能完成这部分开发。</div>
-        </div>
-        <div class="alert info">
-          <span>ℹ️</span>
-          <div><strong>备用方案（无法安装ODA时）</strong><br>经实证验证：DWG二进制中文字以GBK明文存储，可直接字节搜索提取。但这只能得到文字，无图层/坐标/块关系信息，精度较低。</div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /main -->
-
-<div class="footer">
-  <div>AI 辅助 CAD 电气图纸分析调研报告 · Ultraresearch · 2026-06-29</div>
-  <div style="margin-top:4px">调研工作者: A1(DWG转换) · A2(AI方案) · A3(开源项目) · A4(电气规则) · E1(扩展验证) · E2(DWG探索)</div>
 </div>
 
+<div class="wrap">
+
+  <div class="stats">
+    <div class="stat"><div class="n">65</div><div class="l">系统图柜体 · 块属性零AI提取</div></div>
+    <div class="stat"><div class="n">18 / 54</div><div class="l">回路数 / 互感器数 · 三方一致</div></div>
+    <div class="stat"><div class="n">3 路</div><div class="l">PDF·代码·视觉 交叉验证</div></div>
+    <div class="stat"><div class="n">~1.00</div><div class="l">PaddleOCR 识别置信度</div></div>
+  </div>
+
+  <!-- 执行摘要 -->
+  <section style="border-top:none">
+    <div class="eyebrow">Executive Summary</div>
+    <h2>一句话结论</h2>
+    <div class="note green">
+      <b>配置清单的"数量统计"可以从图纸可靠自动提取，且经三方交叉验证一致。</b>
+      柜体台账（编号/额定/数量）与回路/互感器数量为 <b>100% 确定项</b>；
+      每路型号与额定来自系统图监控子图，可由<b>坐标列对齐提取 + LLM 视觉校验</b>获得；
+      仅"选型固定件、待确认柜、项目抬头"需业务输入补足。
+    </div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card"><h4><span class="ico b-green">✓</span>能 100% 确定</h4><p>柜体台账、回路数、互感器数量、监控模块型号 —— 来自结构化块属性与块计数，机器直读零歧义。</p></div>
+      <div class="card"><h4><span class="ico b-amber">≈</span>需提取/校验</h4><p>每路出线电流、CT/电缆型号 —— 画在系统图监控子图上，坐标对齐+视觉可得，需置信度标注。</p></div>
+      <div class="card"><h4><span class="ico b-red">!</span>图纸外</h4><p>选型固定件清单、项目编号、待确认柜明细 —— 需刘琦/订单系统提供。</p></div>
+    </div>
+  </section>
+
+  <!-- 需求 -->
+  <section>
+    <div class="eyebrow">Requirements</div>
+    <h2>两个核心需求</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4><span class="ico b-blue">①</span>设备配置清单生成</h4>
+        <p>读取 CAD 图纸 → 识别列头柜、进线/出线回路 → 结合选型规则 → 输出标准化 Excel 设备配置清单（产品名称/型号/数量）。</p>
+        <div style="margin-top:10px">
+          <span class="chip">列头柜识别</span><span class="chip">进出线回路统计</span><span class="chip">选型匹配</span><span class="chip">Excel 输出</span>
+        </div>
+      </div>
+      <div class="card">
+        <h4><span class="ico b-purple">②</span>CT·电缆匹配校验</h4>
+        <p>提取互感器/断路器/电缆规格 → 按 GB/T 1208 与 GB 50054 规则校验匹配合理性 → 标记 CT 偏小、电缆过粗/过细等异常 → 输出评估报告。</p>
+        <div style="margin-top:10px">
+          <span class="chip">CT-断路器匹配</span><span class="chip">电缆载流量校验</span><span class="chip">异常清单</span><span class="chip">评估报告</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 架构 -->
+  <section>
+    <div class="eyebrow">Architecture</div>
+    <h2>技术架构与处理流水线</h2>
+    <p class="lead">DWG 经 ODA 转 DXF 后，以确定性引擎为主提取结构化数据，LLM 视觉对密集/边缘情况做校验兜底，最终输出 Excel 与评估报告。</p>
+    <div class="diagram">
+      <div class="mermaid">
+flowchart LR
+  A[DWG 图纸] -->|ODA File Converter| B[DXF]
+  B --> C{ezdxf 解析}
+  C --> D1[块属性 ATTRIB<br/>柜体台账 · 零AI]
+  C --> D2[坐标列对齐<br/>逐回路 断路器/CT/电缆]
+  C --> D3[块计数 + 文字<br/>回路数 · 互感器数]
+  D2 -.密集/边缘.-> V[LLM 视觉校验<br/>渲染PNG → 读图]
+  D1 --> E[选型规则引擎]
+  D3 --> E
+  V --> E
+  E --> F1[(Excel<br/>设备配置清单)]
+  E --> F2[(评估报告<br/>CT/电缆校验)]
+  style A fill:#1a2436,stroke:#3b82f6,color:#e6edf6
+  style V fill:#1a2436,stroke:#a78bfa,color:#e6edf6
+  style F1 fill:#14271c,stroke:#34d399,color:#e6edf6
+  style F2 fill:#14271c,stroke:#34d399,color:#e6edf6
+      </div>
+    </div>
+    <div class="note">
+      <b>关键前置：</b>实测 R2018(AC1032) 的 DWG 二进制经强压缩，无法直接挖文字（全乱码）；R2004 才有明文。
+      3 个示例里 2 个是 R2018 → <b>ODA 转换是硬性必需，非可选兜底</b>。
+    </div>
+  </section>
+
+  <!-- 方法论：用不用AI -->
+  <section>
+    <div class="eyebrow">Methodology</div>
+    <h2>用 AI，还是不用 AI？</h2>
+    <p class="lead">这是项目最初的核心问题。经真实数据验证，答案是：<b>核心提取与校验用规则引擎（更准、更省、可复现），LLM 视觉只用在 3 个兜底点。</b></p>
+    <div class="grid g2">
+      <div class="card">
+        <h4><span class="ico b-green">⚙</span>规则 / 坐标引擎为主</h4>
+        <p>标准图纸的柜体元数据是<b>结构化块属性</b>，断路器/CT/电缆是<b>规整文字</b>，且同回路信息<b>同 X 坐标竖排对齐</b>。确定性提取准确率高、零 token 成本、可复现。</p>
+      </div>
+      <div class="card">
+        <h4><span class="ico b-purple">👁</span>LLM 视觉为校验兜底</h4>
+        <p>仅用于：① 非结构化/扫描图纸的语义提取；② 断路器-回路的空间关联边缘情况校验；③ 无文字层 PDF 的读取（已改用 PaddleOCR 去 LLM 化）。</p>
+      </div>
+    </div>
+    <div class="note amber">
+      <b>实测教训（已修正旧结论）：</b>若只做"扁平文字提取"会误判"出线 CT 型号拿不到"。实际上每个柜的<b>监控子图逐回路画明了 CT/断路器/电缆</b>——按子图内 X 列对齐即可结构化提取，无需 AI 去"算"，只需"读"。
+    </div>
+  </section>
+
+  <!-- 验证里程碑 -->
+  <section>
+    <div class="eyebrow">Validation Milestones</div>
+    <h2>关键验证里程碑（全部跑代码实证）</h2>
+    <div class="tl" style="margin-top:18px">
+      <div class="tl-item"><h4>ODA 转换链路打通</h4><p>winget 安装 ODA File Converter 27.1.0，R2018/R2004 DWG 均成功转 DXF；ezdxf <span class="mono">recover</span> 稳健读取。</p></div>
+      <div class="tl-item"><h4>65 个柜体零 AI 提取</h4><p>系统图块属性直读：柜编号/额定电流/二次图号/进出线方式 100% 还原。</p></div>
+      <div class="tl-item"><h4>跨图纸关联坐实</h4><p>柜属性 <span class="mono">二次图号=301</span> 精确指向「301-单路进线18路出线」二次图，建立系统图↔二次图链接。</p></div>
+      <div class="tl-item"><h4>监控子图 = 配置清单本体</h4><p>系统图每个柜的监控子图逐回路画明进线/出线 CT、断路器、电缆、负载；全图 51 张子图覆盖标准柜。</p></div>
+      <div class="tl-item"><h4>图→结构化BOM 闭环</h4><p>坐标列对齐引擎对 1进8出柜提取逐回路 BOM，与 LLM 视觉读图 7/8 完全一致，BOM 汇总 100% 吻合。</p></div>
+      <div class="tl-item"><h4>PaddleOCR 去 LLM 化核对</h4><p>对无文字层的配置清单 PDF 做确定性 OCR（置信度≈1.00），与 DWG 代码统计三方一致。</p></div>
+    </div>
+  </section>
+
+  <!-- 确定性边界 -->
+  <section>
+    <div class="eyebrow">Certainty Boundary</div>
+    <h2>确定性边界 · 哪些能 100% 确定</h2>
+    <p class="lead">诚实分层：把确定的自动输出，不确定的标"需人工复核"，而非对全部数据给统一的"已识别"假象。</p>
+    <div class="tier t1"><h4>🟢 第 1 档 · 100% 可确定（结构化块属性 / 块计数）</h4>
+      <p>柜体清单（65）、每柜额定电流、进出线方式、外形尺寸、数量、同型柜套数；单张二次图出线回路数（IC65块×18 与 QF1~QF18 双信号互证）。</p></div>
+    <div class="tier t2"><h4>🟦 第 2 档 · 高可靠（项目级汇总）</h4>
+      <p>全项目断路器规格（621条）、CT/霍尔型号（239个）、电缆规格（606条）—— 提取为清单可靠；归属到具体回路见第 3 档。</p></div>
+    <div class="tier t3"><h4>🟠 第 3 档 · 需提取+校验（坐标对齐 / 视觉）</h4>
+      <p>每路出线电流、CT/电缆型号、断路器-回路归属 —— 数据在监控子图上，按 X 列对齐可得，需置信度标注与视觉交叉校验（已验证 7/8 命中，边缘情况可逮出）。</p></div>
+    <div class="tier t4"><h4>🔴 第 4 档 · 图纸外 / 未设计</h4>
+      <p>选型固定件（HMI/软件/继电器）、项目编号/抬头、13 个二次图号"待确认"柜的明细、实际负荷电流 —— 需业务输入或订单系统。</p></div>
+  </section>
+
+  <!-- 数据洞察 -->
+  <section>
+    <div class="eyebrow">Data Insights</div>
+    <h2>真实数据洞察（宁夏 D03 系统图）</h2>
+    <div class="grid g2">
+      <div><div class="chartbox"><canvas id="c1"></canvas></div><div class="cap">65 个柜体按额定电流分布</div></div>
+      <div><div class="chartbox"><canvas id="c2"></canvas></div><div class="cap">二次图号分布（决定明细可推性）</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:18px">
+      <div><div class="chartbox"><canvas id="c3"></canvas></div><div class="cap">出线霍尔传感器型号分布（全图 239 个）</div></div>
+      <div><div class="chartbox"><canvas id="c4"></canvas></div><div class="cap">监控子图覆盖率（51 子图 / 65 柜）</div></div>
+    </div>
+  </section>
+
+  <!-- 闭环演示 -->
+  <section>
+    <div class="eyebrow">Closed-Loop Demo</div>
+    <h2>图 → 结构化 BOM 闭环演示</h2>
+    <p class="lead">以一个「1进8出」柜的监控子图为例：坐标引擎自动提取逐回路 BOM，与视觉读图交叉校验。</p>
+    <div class="grid g2">
+      <div>
+        <div class="shot"><img src="assets/sys-monitor.png" alt="系统图监控子图"></div>
+        <div class="cap">系统图监控子图：进线 LDCT-600X1 + 8 路出线（各带断路器/CT/漏电/电缆/负载）</div>
+      </div>
+      <div>
+        <h3 style="margin-top:0">自动提取结果 · 单套明细</h3>
+        <table>
+          <tr><th>产品名称</th><th>型号</th><th>数量</th><th>来源</th></tr>
+          <tr><td>进线霍尔传感器</td><td class="mono">LDCT-600X1</td><td>1</td><td class="ok">图纸直读</td></tr>
+          <tr><td>出线霍尔传感器</td><td class="mono">LDCT-400K2</td><td>1</td><td class="ok">图纸直读</td></tr>
+          <tr><td>出线霍尔传感器</td><td class="mono">LDCT-200K2</td><td>3</td><td class="ok">图纸直读</td></tr>
+          <tr><td>出线霍尔传感器</td><td class="mono">LDCT-10K2</td><td>4</td><td class="ok">图纸直读</td></tr>
+          <tr><td>漏电流传感器模块</td><td class="mono">LDC-10M60 / 10M</td><td>1 / 7</td><td class="ok">图纸直读</td></tr>
+          <tr><td>监控主机 / 电源</td><td class="mono">PilotSPM207 / PMAC1215-12</td><td>1 / 1</td><td class="ok">图纸直读</td></tr>
+          <tr><td>HMI / 软件 / 继电器</td><td class="mono">PMAC201V7 / MY2N-GS</td><td>各 1</td><td class="warn">固定件·规则补</td></tr>
+        </table>
+        <div class="note green" style="margin-top:14px">坐标引擎 vs 视觉读图：<b>7/8 回路完全一致</b>，BOM 汇总 100% 吻合；唯一偏差（回路3断路器误抓进线）正由双方法交叉校验逮出。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 三方核对 -->
+  <section>
+    <div class="eyebrow">Triple Verification</div>
+    <h2>三方一致性核对 · 示例1（301）</h2>
+    <p class="lead">同一份配置，从三条独立路径取数 —— PDF（PaddleOCR 确定性）、DWG（代码统计）、DWG（LLM 视觉）—— 结果完全一致。</p>
+    <table>
+      <tr><th>数据项</th><th>PDF · PaddleOCR</th><th>DWG · 代码统计</th><th>DWG · LLM 视觉</th><th>结论</th></tr>
+      <tr><td>出线回路数</td><td>18 (32A/3P×18) <span class="mono">conf 1.00</span></td><td>IC65 块 ×18</td><td>QA1~QA18 = 18</td><td class="ok">✓ 一致</td></tr>
+      <tr><td><b>出线互感器</b></td><td><b>54</b> (LACT-65C1) <span class="mono">conf 1.00</span></td><td>QF1a~QF18c = 54 相点</td><td>18 通道 × 3 相 = 54</td><td class="ok">✓ 一致</td></tr>
+      <tr><td>进线</td><td>250A/3P×1 <span class="mono">conf 1.00</span></td><td>进线开关(1路)</td><td>TAa/TAb/TAc 三相</td><td class="ok">✓ 一致</td></tr>
+      <tr><td>主机 / 开关量模块</td><td>PilotSPM206-54-C1 ×1 / ×2</td><td>出现 ×1 / ×2</td><td>主机区可见</td><td class="ok">✓ 一致</td></tr>
+    </table>
+    <div class="grid g2" style="margin-top:18px">
+      <div><div class="shot"><img src="assets/pdf-bom.png" alt="PDF配置清单"></div><div class="cap">配置清单 PDF（PaddleOCR 确定性读取，无文字层）</div></div>
+      <div><div class="shot"><img src="assets/secondary-qa.png" alt="二次图采集通道"></div><div class="cap">二次图采集通道：QA1~QA18（18路）+ TAa/b/c（进线三相）</div></div>
+    </div>
+  </section>
+
+  <!-- 工具链 -->
+  <section>
+    <div class="eyebrow">Toolchain</div>
+    <h2>工具链与环境</h2>
+    <div class="grid g3">
+      <div class="card"><h4><span class="ico b-blue">🔄</span>转换</h4><p>ODA File Converter 27.1.0<br>DWG → DXF（R1.2~R2018）</p></div>
+      <div class="card"><h4><span class="ico b-cyan">📐</span>解析</h4><p>ezdxf 1.4.4 · recover 模式<br>块属性 / 文字 / 坐标</p></div>
+      <div class="card"><h4><span class="ico b-green">📊</span>输出</h4><p>openpyxl / pandas<br>格式化 Excel + 报告</p></div>
+      <div class="card"><h4><span class="ico b-purple">👁</span>视觉</h4><p>matplotlib 渲染 PNG<br>+ Claude 多模态读图</p></div>
+      <div class="card"><h4><span class="ico b-amber">🔤</span>OCR</h4><p>PaddleOCR 2.7.3 (PP-OCRv4)<br>PDF 表格确定性识别</p></div>
+      <div class="card"><h4><span class="ico b-red">📏</span>规则</h4><p>GB/T 1208-2006 · GB 50054<br>CT 70% 选型 / 载流量校验</p></div>
+    </div>
+  </section>
+
+  <!-- 路线图 -->
+  <section>
+    <div class="eyebrow">Roadmap & Open Items</div>
+    <h2>待确认事项与下一步</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4><span class="ico b-amber">?</span>需业务方（刘琦）确认</h4>
+        <p>① 选型规则文件（电流/电压→型号+数量）<br>② 固定件清单（HMI/软件/继电器）<br>③ 13 个"待确认"柜的二次图号映射<br>④「列头柜」判定口径（系统图均称"动力柜"）<br>⑤ 项目编号/抬头来源</p>
+      </div>
+      <div class="card">
+        <h4><span class="ico b-green">→</span>工程下一步</h4>
+        <p>① 批量版引擎：遍历 51 张监控子图自动出多柜清单，相同配置合并"需求N套"<br>② 三方核对封装为自动校验工具（DWG+PDF→一致性报告）<br>③ 需求二 CT/电缆校验最小闭环<br>④ 兼容 H1B2R 等其他传感器家族</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    Auto Claw · AI 驱动 CAD 图纸分析解决方案 · 工程验证版<br>
+    全部结论基于真实示例图纸代码验证 · 更新 2026-06-30 ·
+    <a href="https://github.com/djunmaster/ai-drawing-research-report">GitHub 仓库</a>
+  </div>
+</footer>
+
 <script>
-  // Sidebar active highlight on scroll
-  const sections = document.querySelectorAll('.section[id]');
-  const navLinks = document.querySelectorAll('#sidebar nav a');
+mermaid.initialize({startOnLoad:true,theme:'dark',themeVariables:{
+  fontSize:'14px',primaryColor:'#1a2436',primaryTextColor:'#e6edf6',
+  lineColor:'#3b82f6',primaryBorderColor:'#243049'}});
 
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(a => a.classList.remove('active'));
-        const link = document.querySelector(`#sidebar nav a[href="#${entry.target.id}"]`);
-        if (link) link.classList.add('active');
-      }
-    });
-  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+const gridC='#243049', txtC='#9fb0c8';
+Chart.defaults.color=txtC; Chart.defaults.borderColor=gridC; Chart.defaults.font.family="'Microsoft YaHei',sans-serif";
+const PAL=['#3b82f6','#22d3ee','#34d399','#fbbf24','#f87171','#a78bfa'];
 
-  sections.forEach(s => obs.observe(s));
+new Chart(c1,{type:'doughnut',data:{labels:['400A (54)','200A (4)','125A (4)','1000A (2)','300A (1)'],
+  datasets:[{data:[54,4,4,2,1],backgroundColor:PAL,borderColor:'#0b0f17',borderWidth:2}]},
+  options:{plugins:{legend:{position:'right',labels:{boxWidth:12,padding:10}}},cutout:'58%',maintainAspectRatio:false}});
 
-  // Smooth scroll
-  navLinks.forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      const target = document.querySelector(a.getAttribute('href'));
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
+new Chart(c2,{type:'doughnut',data:{labels:['301 可映射 (52)','待确认 (10)','/ 缺失 (3)'],
+  datasets:[{data:[52,10,3],backgroundColor:['#34d399','#fbbf24','#f87171'],borderColor:'#0b0f17',borderWidth:2}]},
+  options:{plugins:{legend:{position:'right',labels:{boxWidth:12,padding:10}}},cutout:'58%',maintainAspectRatio:false}});
+
+new Chart(c3,{type:'bar',data:{labels:['200K2','10K2','10K1','100K1','63K1','400K2','50K1'],
+  datasets:[{label:'数量',data:[52,28,18,15,13,8,5],backgroundColor:'#22d3ee',borderRadius:5}]},
+  options:{plugins:{legend:{display:false}},scales:{y:{grid:{color:gridC}},x:{grid:{display:false}}},maintainAspectRatio:false}});
+
+new Chart(c4,{type:'bar',data:{labels:['有监控子图','待确认/无'],
+  datasets:[{label:'柜数',data:[51,14],backgroundColor:['#34d399','#f87171'],borderRadius:6,barThickness:80}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:gridC}},y:{grid:{display:false}}},maintainAspectRatio:false}});
 </script>
 </body>
 </html>
